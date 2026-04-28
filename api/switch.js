@@ -1,37 +1,30 @@
-// api/switch.js
-// GET  → retorna se inscrições estão abertas
-// POST → atualiza o status (requer senha)
-
 export default async function handler(req, res) {
-  // CORS para os polos conseguirem fazer fetch
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const EDGE_CONFIG_URL = process.env.EDGE_CONFIG;
-  const VERCEL_TOKEN    = process.env.VERCEL_TOKEN;
-  const EDGE_CONFIG_ID  = process.env.EDGE_CONFIG_ID;
-  const SENHA           = process.env.SENHA_PAINEL;
+  const EDGE_CONFIG_ID = process.env.EDGE_CONFIG_ID;
+  const EDGE_CONFIG_TOKEN = process.env.EDGE_CONFIG_TOKEN;
+  const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
+  const SENHA = process.env.SENHA_PAINEL;
 
-  // ── GET: retorna status atual ──────────────────────────────
+  // ── GET: lê o status direto pela API REST do Edge Config ──
   if (req.method === 'GET') {
     try {
-      const r = await fetch(`${EDGE_CONFIG_URL}/item/inscricoes`, {
-        headers: { Authorization: `Bearer ${process.env.EDGE_CONFIG_TOKEN}` }
-      });
-      const data = await r.json();
-      return res.status(200).json({ aberto: data === 'ABERTO' });
+      const r = await fetch(
+        `https://edge-config.vercel.com/${EDGE_CONFIG_ID}/item/inscricoes`,
+        { headers: { Authorization: `Bearer ${EDGE_CONFIG_TOKEN}` } }
+      );
+      const valor = await r.json();
+      return res.status(200).json({ aberto: valor === 'ABERTO' });
     } catch (e) {
-      // Se não encontrar, considera aberto por padrão
       return res.status(200).json({ aberto: true });
     }
   }
 
-  // ── POST: atualiza status ──────────────────────────────────
+  // ── POST: atualiza o status ────────────────────────────────
   if (req.method === 'POST') {
     const { senha, status } = req.body;
 
@@ -58,7 +51,11 @@ export default async function handler(req, res) {
         }
       );
       const data = await r.json();
-      return res.status(200).json({ success: true, status, data });
+      if (r.ok) {
+        return res.status(200).json({ success: true, status });
+      } else {
+        return res.status(500).json({ error: data });
+      }
     } catch (e) {
       return res.status(500).json({ error: e.message });
     }
