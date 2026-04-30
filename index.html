@@ -514,11 +514,13 @@ let poloAtivo    = null;
 function entrar() {
   senha = document.getElementById('loginSenha').value;
   if (!senha) return mostrarMsg('loginMsg', 'Digite a senha', 'err');
+  localStorage.setItem('fiec_admin_senha', senha);
   carregarTudo();
 }
 
 function sair() {
   senha = '';
+  localStorage.removeItem('fiec_admin_senha');
   document.getElementById('loginWrap').style.display = 'flex';
   document.getElementById('adminPanel').style.display = 'none';
   document.getElementById('loginSenha').value = '';
@@ -784,6 +786,15 @@ function mostrarMsg(id, texto, tipo) {
   el.style.display = 'block';
   setTimeout(() => { el.style.display = 'none'; }, 4000);
 }
+
+// Auto-login se tiver senha salva
+window.addEventListener('load', () => {
+  const senhaSalva = localStorage.getItem('fiec_admin_senha');
+  if (senhaSalva) {
+    senha = senhaSalva;
+    carregarTudo();
+  }
+});
 
 document.getElementById('modalTurmasBg').addEventListener('click', e => {
   if (e.target === e.currentTarget) fecharModalTurmas();
