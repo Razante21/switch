@@ -99,16 +99,24 @@ export default async function handler(req, res) {
       }
     }
 
+    // Atualizar TODAS as turmas de uma vez (restaurar backup)
+    if (body.todasTurmas !== undefined) {
+      try {
+        const ok = await ecSet([{ operation: 'upsert', key: 'turmas', value: body.todasTurmas }]);
+        if (ok) backupTurmas(body.todasTurmas); // backup só 1x
+        return res.status(ok ? 200 : 500).json({ success: ok });
+      } catch(e) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
     // Atualizar turmas de um polo + backup na planilha
     if (body.polo && body.turmas !== undefined) {
       try {
         const atual = await ecGet('turmas') ?? {};
         atual[body.polo] = body.turmas;
         const ok = await ecSet([{ operation: 'upsert', key: 'turmas', value: atual }]);
-        if (ok) {
-          // Backup assíncrono — não espera resposta para não atrasar o usuário
-          backupTurmas(atual);
-        }
+        if (ok) backupTurmas(atual);
         return res.status(ok ? 200 : 500).json({ success: ok });
       } catch(e) {
         return res.status(500).json({ error: e.message });
