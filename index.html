@@ -421,6 +421,7 @@ const POLOS = [
 
 let senha = '';
 let dadosGlobais = {};   // { polo-id: [turmas] }
+let polosStatus  = {};   // { polo-id: true/false }
 let editandoPolo = null;
 let editandoIdx  = null;
 
@@ -461,6 +462,7 @@ async function carregarTudo() {
 
     atualizarStatusDot(d.aberto);
     dadosGlobais = d.turmas || {};
+    polosStatus  = d.polosStatus || {};
     renderPolos();
   } catch(e) {
     mostrarMsg('loginMsg', 'Erro de conexão', 'err');
@@ -501,6 +503,7 @@ function renderPolos() {
   const grid = document.getElementById('polosGrid');
   grid.innerHTML = POLOS.map(polo => {
     const turmas = dadosGlobais[polo.id] || [];
+    const poloAberto = polosStatus[polo.id] !== false; // default aberto
     const turmasHTML = turmas.length === 0
       ? `<div class="empty-turmas">Nenhuma turma cadastrada</div>`
       : turmas.map((t, i) => `
@@ -521,7 +524,14 @@ function renderPolos() {
       <div class="polo-admin-card">
         <div class="polo-admin-header">
           <h4>${polo.nome}</h4>
-          <button class="btn btn-accent btn-sm" onclick="novaTurma('${polo.id}')">+ Turma</button>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm ${poloAberto ? 'btn-red' : 'btn-green'}" 
+              onclick="togglePolo('${polo.id}')"
+              title="${poloAberto ? 'Fechar polo' : 'Abrir polo'}">
+              ${poloAberto ? '✕ Fechar' : '✓ Abrir'}
+            </button>
+            <button class="btn btn-accent btn-sm" onclick="novaTurma('${polo.id}')">+ Turma</button>
+          </div>
         </div>
         <div class="polo-admin-body">
           ${turmasHTML}
@@ -597,6 +607,27 @@ async function salvarTurma() {
   } catch(e) {
     mostrarMsg('modalMsg', 'Erro de conexão', 'err');
   }
+}
+
+async function togglePolo(poloId) {
+  const aberto = polosStatus[poloId] !== false;
+  const novoStatus = !aberto;
+  try {
+    const r = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha, polo: poloId, poloAberto: novoStatus })
+    });
+    const d = await r.json();
+    if (d.success) {
+      polosStatus[poloId] = novoStatus;
+      renderPolos();
+      mostrarMsg('switchMsg',
+        novoStatus ? `✓ ${poloId} aberto!` : `✕ ${poloId} fechado!`, 'ok');
+    } else {
+      mostrarMsg('switchMsg', d.error || 'Erro', 'err');
+    }
+  } catch(e) { mostrarMsg('switchMsg', 'Erro de conexão', 'err'); }
 }
 
 async function toggleTurma(poloId, idx) {
