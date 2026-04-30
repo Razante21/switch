@@ -500,14 +500,14 @@ let poloAtivo    = null;
 // ── LOGIN ──────────────────────────────────────────────────
 function entrar() {
   senha = localStorage.getItem('fiec_admin_senha') || '';
-  if (!senha) { window.location.href = '/'; return; }
+  if (!senha) { window.location.href = '/index.html'; return; }
   carregarTudo();
 }
 
 function sair() {
   senha = '';
   localStorage.removeItem('fiec_admin_senha');
-  window.location.href = '/';
+  window.location.href = '/index.html';
 }
 
 // ── CARREGAR ───────────────────────────────────────────────
@@ -524,7 +524,7 @@ async function carregarTudo() {
     const t = await teste.json();
     if (!t.success && t.error === 'Senha incorreta') {
       localStorage.removeItem('fiec_admin_senha');
-      window.location.href = '/';
+      window.location.href = '/index.html';
       return;
     }
 
@@ -774,7 +774,7 @@ function mostrarMsg(id, texto, tipo) {
 window.addEventListener('load', () => {
   const senhaSalva = localStorage.getItem('fiec_admin_senha');
   if (!senhaSalva) {
-    window.location.href = '/';
+    window.location.href = '/index.html';
     return;
   }
   senha = senhaSalva;

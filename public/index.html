@@ -97,7 +97,7 @@
 // Se já tem senha salva, vai direto para o admin
 const senhaSalva = localStorage.getItem('fiec_admin_senha');
 if (senhaSalva) {
-  window.location.href = '/admin';
+  window.location.href = '/admin.html';
 }
 
 async function entrar() {
@@ -119,7 +119,7 @@ async function entrar() {
 
     // Senha ok — salva e redireciona
     localStorage.setItem('fiec_admin_senha', senha);
-    window.location.href = '/admin';
+    window.location.href = '/admin.html';
   } catch(e) {
     mostrarErro('Erro de conexão');
   }
