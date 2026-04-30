@@ -794,18 +794,18 @@ async function restaurarDaPlanilha() {
 
     if (!d.turmas) return mostrarMsg('switchMsg', 'Planilha sem turmas ou erro de conexão', 'err');
 
-    // Salva cada polo no Edge Config
-    const polos = Object.keys(d.turmas);
-    for (const polo of polos) {
-      await fetch('/api/switch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ senha, polo, turmas: d.turmas[polo] })
-      });
-    }
+    // Salva todas as turmas de uma vez via API especial
+    const r2 = await fetch('/api/switch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha, todasTurmas: d.turmas })
+    });
+    const d2 = await r2.json();
+    if (!d2.success) return mostrarMsg('switchMsg', d2.error || 'Erro ao salvar', 'err');
 
     dadosGlobais = d.turmas;
     renderPolos();
+    const polos = Object.keys(d.turmas);
     mostrarMsg('switchMsg', `✓ ${polos.length} polos restaurados da planilha!`, 'ok');
   } catch(e) {
     mostrarMsg('switchMsg', 'Erro ao restaurar: ' + e.message, 'err');
