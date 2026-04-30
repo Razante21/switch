@@ -561,11 +561,14 @@ function fecharModal() {
 }
 
 async function salvarTurma() {
+  // Preserva o status aberta/fechada ao editar
+  const abertaAtual = editandoIdx !== null && dadosGlobais[editandoPolo]?.[editandoIdx]?.aberta;
   const turma = {
     modulo:  document.getElementById('mModulo').value,
     dias:    document.getElementById('mDias').value,
     horario: document.getElementById('mHorario').value.trim(),
     form:    document.getElementById('mForm').value.trim(),
+    aberta:  editandoIdx !== null ? (abertaAtual !== false) : true,
   };
 
   if (!turma.horario) return mostrarMsg('modalMsg', 'Preencha o horário', 'err');
@@ -594,6 +597,25 @@ async function salvarTurma() {
   } catch(e) {
     mostrarMsg('modalMsg', 'Erro de conexão', 'err');
   }
+}
+
+async function toggleTurma(poloId, idx) {
+  const lista = [...(dadosGlobais[poloId] || [])];
+  lista[idx] = { ...lista[idx], aberta: lista[idx].aberta === false ? true : false };
+  try {
+    const r = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha, polo: poloId, turmas: lista })
+    });
+    const d = await r.json();
+    if (d.success) {
+      dadosGlobais[poloId] = lista;
+      renderPolos();
+    } else {
+      alert(d.error || 'Erro');
+    }
+  } catch(e) { alert('Erro de conexão'); }
 }
 
 async function removerTurma(poloId, idx) {
