@@ -370,6 +370,21 @@
 
   .separator { height: 1px; background: var(--line); }
 
+  .restore-bar {
+    background: var(--s2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .restore-bar p { font-size: .85rem; color: var(--sub); }
+  .restore-bar p span { color: var(--accent); font-weight: 600; }
+
   @media (max-width: 600px) {
     .switch-card { flex-direction: column; align-items: flex-start; }
     .admin-header { flex-direction: column; align-items: flex-start; }
@@ -408,6 +423,12 @@
   </div>
 
   <div class="msg" id="switchMsg" style="margin-bottom:24px;"></div>
+
+  <!-- RESTAURAR BACKUP -->
+  <div class="restore-bar">
+    <p>Restaurar turmas da <span>planilha master</span> para o Edge Config</p>
+    <button class="btn btn-ghost btn-sm" onclick="restaurarDaPlanilha()">↓ Restaurar backup</button>
+  </div>
 
   <!-- TURMAS -->
   <div class="section-title">Turmas por <span>Polo</span></div>
@@ -759,6 +780,38 @@ async function removerTurma(poloId, idx) {
       renderTurmasModal();
     }
   } catch(e) { alert('Erro de conexão'); }
+}
+
+// ── RESTAURAR DA PLANILHA ─────────────────────────────────
+async function restaurarDaPlanilha() {
+  const MASTER_URL = 'URL_APPS_SCRIPT_MASTER_AQUI'; // mesma URL do backup
+
+  if (!confirm('Isso vai sobrescrever as turmas do Edge Config com os dados da planilha. Continuar?')) return;
+
+  try {
+    mostrarMsg('switchMsg', 'Buscando turmas da planilha...', 'ok');
+
+    const r = await fetch(`${MASTER_URL}?action=getTurmas`);
+    const d = await r.json();
+
+    if (!d.turmas) return mostrarMsg('switchMsg', 'Planilha sem turmas ou erro de conexão', 'err');
+
+    // Salva cada polo no Edge Config
+    const polos = Object.keys(d.turmas);
+    for (const polo of polos) {
+      await fetch('/api/switch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senha, polo, turmas: d.turmas[polo] })
+      });
+    }
+
+    dadosGlobais = d.turmas;
+    renderPolos();
+    mostrarMsg('switchMsg', `✓ ${polos.length} polos restaurados da planilha!`, 'ok');
+  } catch(e) {
+    mostrarMsg('switchMsg', 'Erro ao restaurar: ' + e.message, 'err');
+  }
 }
 
 // ── HELPERS ────────────────────────────────────────────────
