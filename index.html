@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSAO 2.0 - TOGGLE TURMA ATIVO - 30/04/2026 -->
+<!-- VERSAO 3.0 - MODAL TURMAS - 30/04/2026 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -230,9 +230,75 @@
     font-family: 'Playfair Display', serif;
     font-size: 1rem;
     font-weight: 700;
+    cursor: pointer;
+  }
+  .polo-admin-header h4:hover { color: var(--accent); }
+
+  .polo-admin-body {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
-  .polo-admin-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+  .polo-turmas-count {
+    font-family: 'DM Mono', monospace;
+    font-size: .75rem;
+    color: var(--sub);
+  }
+  .polo-turmas-count span { color: var(--accent); }
+
+  /* ── MODAL TURMAS ── */
+  .modal-turmas-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.75);
+    z-index: 99;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-turmas-bg.open { display: flex; }
+
+  .modal-turmas {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    width: 100%; max-width: 560px;
+    max-height: 85vh;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-turmas-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--s2);
+  }
+
+  .modal-turmas-header h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  .modal-turmas-header h3 span { color: var(--accent); font-style: italic; }
+
+  .modal-turmas-header-actions { display: flex; gap: 8px; align-items: center; }
+
+  .modal-close {
+    background: transparent; border: none;
+    color: var(--sub); font-size: 1.1rem;
+    cursor: pointer; padding: 4px 8px;
+    transition: color .2s;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .modal-turmas-body {
+    padding: 16px 24px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 10px;
+    flex: 1;
+  }
 
   .turma-item {
     background: var(--s3);
@@ -262,12 +328,12 @@
 
   .empty-turmas {
     text-align: center;
-    padding: 20px;
+    padding: 32px 20px;
     color: var(--dim);
     font-size: .85rem;
   }
 
-  /* ── MODAL ── */
+  /* ── MODAL FORM TURMA ── */
   .modal-bg {
     position: fixed; inset: 0;
     background: rgba(0,0,0,.7);
@@ -333,8 +399,10 @@
       <h1>Admin <span>FIEC</span></h1>
       <p>Gerencie inscrições e turmas de todos os polos</p>
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="sair()">Sair</button>
-    <span style="font-size:.7rem;color:var(--dim);font-family:'DM Mono',monospace;">v2.0 · toggle turma</span>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:.7rem;color:var(--dim);font-family:'DM Mono',monospace;">v3.0</span>
+      <button class="btn btn-ghost btn-sm" onclick="sair()">Sair</button>
+    </div>
   </div>
 
   <!-- SWITCH -->
@@ -361,6 +429,20 @@
     <!-- gerado por JS -->
   </div>
 
+</div>
+
+<!-- MODAL TURMAS DO POLO -->
+<div class="modal-turmas-bg" id="modalTurmasBg">
+  <div class="modal-turmas">
+    <div class="modal-turmas-header">
+      <h3 id="modalTurmasTitulo">Polo <span>FIEC</span></h3>
+      <div class="modal-turmas-header-actions">
+        <button class="btn btn-accent btn-sm" onclick="novaTurma(poloAtivo)">+ Turma</button>
+        <button class="modal-close" onclick="fecharModalTurmas()">✕</button>
+      </div>
+    </div>
+    <div class="modal-turmas-body" id="modalTurmasBody"></div>
+  </div>
 </div>
 
 <!-- MODAL ADICIONAR/EDITAR TURMA -->
@@ -422,10 +504,11 @@ const POLOS = [
 ];
 
 let senha = '';
-let dadosGlobais = {};   // { polo-id: [turmas] }
-let polosStatus  = {};   // { polo-id: true/false }
+let dadosGlobais = {};
+let polosStatus  = {};
 let editandoPolo = null;
 let editandoIdx  = null;
+let poloAtivo    = null;
 
 // ── LOGIN ──────────────────────────────────────────────────
 function entrar() {
@@ -447,18 +530,16 @@ async function carregarTudo() {
     const r = await fetch(API);
     const d = await r.json();
 
-    // Verifica se senha bate (faz um POST de teste)
     const teste = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ senha, status: d.aberto ? 'ABERTO' : 'ABERTO' })
+      body: JSON.stringify({ senha, status: 'ABERTO' })
     });
     const t = await teste.json();
     if (!t.success && t.error === 'Senha incorreta') {
       return mostrarMsg('loginMsg', 'Senha incorreta', 'err');
     }
 
-    // Login ok
     document.getElementById('loginWrap').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
 
@@ -500,50 +581,76 @@ function atualizarStatusDot(aberto) {
   label.textContent = aberto ? 'Inscrições abertas' : 'Inscrições fechadas';
 }
 
-// ── RENDER POLOS ───────────────────────────────────────────
+// ── RENDER POLOS (cards compactos) ─────────────────────────
 function renderPolos() {
   const grid = document.getElementById('polosGrid');
   grid.innerHTML = POLOS.map(polo => {
-    const turmas = dadosGlobais[polo.id] || [];
-    const poloAberto = polosStatus[polo.id] !== false; // default aberto
-    const turmasHTML = turmas.length === 0
-      ? `<div class="empty-turmas">Nenhuma turma cadastrada</div>`
-      : turmas.map((t, i) => `
-        <div class="turma-item">
-          <div class="turma-info">
-            <div class="turma-modulo">${t.modulo}</div>
-            <div class="turma-dias">${t.dias}</div>
-            <div class="turma-horario">${t.horario}</div>
-            ${t.form ? `<div class="turma-form">${t.form.replace('https://docs.google.com/forms/d/','').substring(0,30)}...</div>` : ''}
-          </div>
-          <div class="turma-actions">
-            <button class="btn btn-sm ${t.aberta !== false ? 'btn-red' : 'btn-green'}" onclick="toggleTurma('${polo.id}', ${i})" title="${t.aberta !== false ? 'Fechar turma' : 'Abrir turma'}">${t.aberta !== false ? '✕ Fechar' : '✓ Abrir'}</button>
-            <button class="btn btn-ghost btn-sm" onclick="editarTurma('${polo.id}', ${i})" title="Editar">✎</button>
-            <button class="btn btn-ghost btn-sm" onclick="removerTurma('${polo.id}', ${i})" title="Remover" style="color:var(--red)">🗑</button>
-          </div>
-        </div>`).join('');
+    const turmas     = dadosGlobais[polo.id] || [];
+    const poloAberto = polosStatus[polo.id] !== false;
+    const count      = turmas.length;
 
     return `
       <div class="polo-admin-card">
         <div class="polo-admin-header">
-          <h4>${polo.nome}</h4>
+          <h4 onclick="abrirModalTurmas('${polo.id}')">${polo.nome}</h4>
           <div style="display:flex;gap:6px;">
-            <button class="btn btn-sm ${poloAberto ? 'btn-red' : 'btn-green'}" 
-              onclick="togglePolo('${polo.id}')"
-              title="${poloAberto ? 'Fechar polo' : 'Abrir polo'}">
+            <button class="btn btn-sm ${poloAberto ? 'btn-red' : 'btn-green'}"
+              onclick="togglePolo('${polo.id}')">
               ${poloAberto ? '✕ Fechar' : '✓ Abrir'}
             </button>
-            <button class="btn btn-accent btn-sm" onclick="novaTurma('${polo.id}')">+ Turma</button>
+            <button class="btn btn-accent btn-sm" onclick="abrirModalTurmas('${polo.id}')">Turmas</button>
           </div>
         </div>
         <div class="polo-admin-body">
-          ${turmasHTML}
+          <span class="polo-turmas-count"><span>${count}</span> turma${count !== 1 ? 's' : ''} cadastrada${count !== 1 ? 's' : ''}</span>
         </div>
       </div>`;
   }).join('');
 }
 
-// ── MODAL ──────────────────────────────────────────────────
+// ── MODAL TURMAS ───────────────────────────────────────────
+function abrirModalTurmas(poloId) {
+  poloAtivo = poloId;
+  const polo = POLOS.find(p => p.id === poloId);
+  document.getElementById('modalTurmasTitulo').innerHTML = polo.nome.replace('Polo ', 'Polo <span>') + '</span>';
+  renderTurmasModal();
+  document.getElementById('modalTurmasBg').classList.add('open');
+}
+
+function fecharModalTurmas() {
+  document.getElementById('modalTurmasBg').classList.remove('open');
+  poloAtivo = null;
+}
+
+function renderTurmasModal() {
+  const turmas = dadosGlobais[poloAtivo] || [];
+  const body   = document.getElementById('modalTurmasBody');
+
+  if (turmas.length === 0) {
+    body.innerHTML = `<div class="empty-turmas">Nenhuma turma cadastrada.<br>Clique em <strong>+ Turma</strong> para adicionar.</div>`;
+    return;
+  }
+
+  body.innerHTML = turmas.map((t, i) => {
+    const aberta = t.aberta !== false;
+    return `
+      <div class="turma-item">
+        <div class="turma-info">
+          <div class="turma-modulo">${t.modulo}</div>
+          <div class="turma-dias">${t.dias}</div>
+          <div class="turma-horario">${t.horario}</div>
+          ${t.form ? `<div class="turma-form">${t.form.replace('https://docs.google.com/forms/d/','').substring(0,40)}...</div>` : ''}
+        </div>
+        <div class="turma-actions">
+          <button class="btn btn-sm ${aberta ? 'btn-red' : 'btn-green'}" onclick="toggleTurma('${poloAtivo}', ${i})" title="${aberta ? 'Fechar' : 'Abrir'}">${aberta ? '✕' : '✓'}</button>
+          <button class="btn btn-ghost btn-sm" onclick="editarTurma('${poloAtivo}', ${i})" title="Editar">✎</button>
+          <button class="btn btn-ghost btn-sm" onclick="removerTurma('${poloAtivo}', ${i})" title="Remover" style="color:var(--red)">🗑</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── MODAL FORM ─────────────────────────────────────────────
 function novaTurma(poloId) {
   editandoPolo = poloId;
   editandoIdx  = null;
@@ -574,7 +681,6 @@ function fecharModal() {
 }
 
 async function salvarTurma() {
-  // Preserva o status aberta/fechada ao editar
   const abertaAtual = editandoIdx !== null && dadosGlobais[editandoPolo]?.[editandoIdx]?.aberta;
   const turma = {
     modulo:  document.getElementById('mModulo').value,
@@ -587,11 +693,8 @@ async function salvarTurma() {
   if (!turma.horario) return mostrarMsg('modalMsg', 'Preencha o horário', 'err');
 
   const lista = [...(dadosGlobais[editandoPolo] || [])];
-  if (editandoIdx !== null) {
-    lista[editandoIdx] = turma;
-  } else {
-    lista.push(turma);
-  }
+  if (editandoIdx !== null) lista[editandoIdx] = turma;
+  else lista.push(turma);
 
   try {
     const r = await fetch(API, {
@@ -603,6 +706,7 @@ async function salvarTurma() {
     if (d.success) {
       dadosGlobais[editandoPolo] = lista;
       renderPolos();
+      if (poloAtivo === editandoPolo) renderTurmasModal();
       fecharModal();
     } else {
       mostrarMsg('modalMsg', d.error || 'Erro', 'err');
@@ -646,6 +750,7 @@ async function toggleTurma(poloId, idx) {
     if (d.success) {
       dadosGlobais[poloId] = lista;
       renderPolos();
+      renderTurmasModal();
     } else {
       alert(d.error || 'Erro');
     }
@@ -666,6 +771,7 @@ async function removerTurma(poloId, idx) {
     if (d.success) {
       dadosGlobais[poloId] = lista;
       renderPolos();
+      renderTurmasModal();
     }
   } catch(e) { alert('Erro de conexão'); }
 }
@@ -679,7 +785,9 @@ function mostrarMsg(id, texto, tipo) {
   setTimeout(() => { el.style.display = 'none'; }, 4000);
 }
 
-// Fecha modal ao clicar fora
+document.getElementById('modalTurmasBg').addEventListener('click', e => {
+  if (e.target === e.currentTarget) fecharModalTurmas();
+});
 document.getElementById('modalBg').addEventListener('click', e => {
   if (e.target === e.currentTarget) fecharModal();
 });
