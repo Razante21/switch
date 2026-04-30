@@ -33,9 +33,10 @@ export default async function handler(req, res) {
   // ── GET ───────────────────────────────────────────────────
   if (req.method === 'GET') {
     try {
-      const [inscricoes, turmasTodas] = await Promise.all([
+      const [inscricoes, turmasTodas, polosStatus] = await Promise.all([
         ecGet('inscricoes'),
-        ecGet('turmas')
+        ecGet('turmas'),
+        ecGet('polosStatus')
       ]);
 
       const aberto = inscricoes !== 'FECHADO';
@@ -44,9 +45,19 @@ export default async function handler(req, res) {
         ? (turmasTodas?.[polo] ?? [])
         : (turmasTodas ?? {});
 
-      return res.status(200).json({ aberto, turmas });
+      // Status do polo específico (default aberto)
+      const poloAberto = polo
+        ? (polosStatus?.[polo] !== false)
+        : undefined;
+
+      return res.status(200).json({
+        aberto,
+        turmas,
+        polosStatus: polosStatus ?? {},
+        ...(polo !== undefined ? { poloAberto } : {})
+      });
     } catch (e) {
-      return res.status(200).json({ aberto: true, turmas: [] });
+      return res.status(200).json({ aberto: true, turmas: [], polosStatus: {} });
     }
   }
 
@@ -66,7 +77,19 @@ export default async function handler(req, res) {
       return res.status(ok ? 200 : 500).json({ success: ok, status: body.status });
     }
 
-    // Atualizar turmas de um polo (inclui campo aberta: true/false)
+    // Atualizar status de um polo (abrir/fechar polo inteiro)
+    if (body.polo && body.poloAberto !== undefined) {
+      try {
+        const atual = await ecGet('polosStatus') ?? {};
+        atual[body.polo] = body.poloAberto;
+        const ok = await ecSet([{ operation: 'upsert', key: 'polosStatus', value: atual }]);
+        return res.status(ok ? 200 : 500).json({ success: ok });
+      } catch(e) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
+    // Atualizar turmas de um polo
     if (body.polo && body.turmas !== undefined) {
       try {
         const atual = await ecGet('turmas') ?? {};
