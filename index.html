@@ -517,8 +517,9 @@ function renderPolos() {
             ${t.form ? `<div class="turma-form">${t.form.replace('https://docs.google.com/forms/d/','').substring(0,30)}...</div>` : ''}
           </div>
           <div class="turma-actions">
-            <button class="btn btn-ghost btn-sm" onclick="editarTurma('${polo.id}', ${i})">✎</button>
-            <button class="btn btn-red btn-sm"   onclick="removerTurma('${polo.id}', ${i})">✕</button>
+            <button class="btn btn-sm ${t.aberta !== false ? 'btn-red' : 'btn-green'}" onclick="toggleTurma('${polo.id}', ${i})" title="${t.aberta !== false ? 'Fechar turma' : 'Abrir turma'}">${t.aberta !== false ? '✕ Fechar' : '✓ Abrir'}</button>
+            <button class="btn btn-ghost btn-sm" onclick="editarTurma('${polo.id}', ${i})" title="Editar">✎</button>
+            <button class="btn btn-ghost btn-sm" onclick="removerTurma('${polo.id}', ${i})" title="Remover" style="color:var(--red)">🗑</button>
           </div>
         </div>`).join('');
 
