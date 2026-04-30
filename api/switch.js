@@ -8,6 +8,7 @@ export default async function handler(req, res) {
   const EC_TOKEN = process.env.EDGE_CONFIG_TOKEN;
   const V_TOKEN  = process.env.VERCEL_TOKEN;
   const SENHA    = process.env.SENHA_PAINEL;
+  const MASTER_URL = process.env.APPS_SCRIPT_MASTER_URL; // URL do Apps Script master
 
   async function ecGet(key) {
     const r = await fetch(
@@ -30,6 +31,21 @@ export default async function handler(req, res) {
     return r.ok;
   }
 
+  // Faz backup das turmas na aba Turmas do Apps Script master
+  async function backupTurmas(turmasTodas) {
+    if (!MASTER_URL) return;
+    try {
+      await fetch(MASTER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: 'backupTurmas', turmas: turmasTodas })
+      });
+    } catch(e) {
+      // Backup falhou — não bloqueia a operação principal
+      console.error('Backup falhou:', e.message);
+    }
+  }
+
   // ── GET ───────────────────────────────────────────────────
   if (req.method === 'GET') {
     try {
@@ -40,15 +56,9 @@ export default async function handler(req, res) {
       ]);
 
       const aberto = inscricoes !== 'FECHADO';
-      const polo = req.query?.polo;
-      const turmas = polo
-        ? (turmasTodas?.[polo] ?? [])
-        : (turmasTodas ?? {});
-
-      // Status do polo específico (default aberto)
-      const poloAberto = polo
-        ? (polosStatus?.[polo] !== false)
-        : undefined;
+      const polo   = req.query?.polo;
+      const turmas = polo ? (turmasTodas?.[polo] ?? []) : (turmasTodas ?? {});
+      const poloAberto = polo ? (polosStatus?.[polo] !== false) : undefined;
 
       return res.status(200).json({
         aberto,
@@ -56,7 +66,7 @@ export default async function handler(req, res) {
         polosStatus: polosStatus ?? {},
         ...(polo !== undefined ? { poloAberto } : {})
       });
-    } catch (e) {
+    } catch(e) {
       return res.status(200).json({ aberto: true, turmas: [], polosStatus: {} });
     }
   }
@@ -77,7 +87,7 @@ export default async function handler(req, res) {
       return res.status(ok ? 200 : 500).json({ success: ok, status: body.status });
     }
 
-    // Atualizar status de um polo (abrir/fechar polo inteiro)
+    // Atualizar status de um polo
     if (body.polo && body.poloAberto !== undefined) {
       try {
         const atual = await ecGet('polosStatus') ?? {};
@@ -89,12 +99,16 @@ export default async function handler(req, res) {
       }
     }
 
-    // Atualizar turmas de um polo
+    // Atualizar turmas de um polo + backup na planilha
     if (body.polo && body.turmas !== undefined) {
       try {
         const atual = await ecGet('turmas') ?? {};
         atual[body.polo] = body.turmas;
         const ok = await ecSet([{ operation: 'upsert', key: 'turmas', value: atual }]);
+        if (ok) {
+          // Backup assíncrono — não espera resposta para não atrasar o usuário
+          backupTurmas(atual);
+        }
         return res.status(ok ? 200 : 500).json({ success: ok });
       } catch(e) {
         return res.status(500).json({ error: e.message });
