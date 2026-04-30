@@ -1,5 +1,7 @@
 {
   "rewrites": [
-    { "source": "/api/switch", "destination": "/api/switch.js" }
+    { "source": "/api/switch", "destination": "/api/switch.js" },
+    { "source": "/admin",      "destination": "/public/admin.html" },
+    { "source": "/",           "destination": "/public/index.html" }
   ]
 }
