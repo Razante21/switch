@@ -385,17 +385,6 @@
   .restore-bar p { font-size: .85rem; color: var(--sub); }
   .restore-bar p span { color: var(--accent); font-weight: 600; }
 
-  /* ── LISTA DE ESPERA TOGGLE ── */
-  .espera-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: .82rem;
-    color: var(--sub);
-    margin-top: 8px;
-  }
-  .espera-toggle button { padding: 4px 10px; font-size: .72rem; }
-
   /* ── NOVO POLO ── */
   .novo-polo-bar {
     background: var(--s2);
@@ -451,6 +440,21 @@
   </div>
 
   <div class="msg" id="switchMsg" style="margin-bottom:24px;"></div>
+
+  <!-- LISTA DE ESPERA GLOBAL -->
+  <div class="switch-card" style="margin-bottom:24px;">
+    <div class="switch-status">
+      <div class="status-dot" id="esperaDot"></div>
+      <div class="status-info">
+        <h3 id="esperaLabel">Carregando...</h3>
+        <p>Lista de espera global — todos os polos</p>
+      </div>
+    </div>
+    <div class="switch-btns">
+      <button class="btn btn-green" onclick="setEsperaGlobal(true)">🔓 Abrir espera</button>
+      <button class="btn btn-red"   onclick="setEsperaGlobal(false)">🔒 Fechar espera</button>
+    </div>
+  </div>
 
   <!-- RESTAURAR BACKUP -->
   <div class="restore-bar">
@@ -545,7 +549,7 @@ let polosStatus  = {};
 let editandoPolo = null;
 let editandoIdx  = null;
 let poloAtivo    = null;
-let esperaStatus = {};   // { polo-id: true/false }
+
 
 // ── LOGIN ──────────────────────────────────────────────────
 function entrar() {
@@ -579,9 +583,9 @@ async function carregarTudo() {
     }
 
     atualizarStatusDot(d.aberto);
-    dadosGlobais = d.turmas      || {};
-    polosStatus  = d.polosStatus || {};
-    esperaStatus = d.esperaStatus || {};
+    dadosGlobais  = d.turmas      || {};
+    polosStatus   = d.polosStatus || {};
+    atualizarEsperaGlobal(d.esperaGlobal !== false);
     renderPolos();
   } catch(e) {
     mostrarMsg('loginMsg', 'Erro de conexão', 'err');
@@ -621,10 +625,9 @@ function atualizarStatusDot(aberto) {
 function renderPolos() {
   const grid = document.getElementById('polosGrid');
   grid.innerHTML = POLOS.map(polo => {
-    const turmas      = dadosGlobais[polo.id] || [];
-    const poloAberto  = polosStatus[polo.id] !== false;
-    const esperaAberta = esperaStatus[polo.id] !== false;
-    const count       = turmas.length;
+    const turmas     = dadosGlobais[polo.id] || [];
+    const poloAberto = polosStatus[polo.id] !== false;
+    const count      = turmas.length;
 
     return `
       <div class="polo-admin-card">
@@ -639,17 +642,9 @@ function renderPolos() {
             <button class="btn btn-accent btn-sm" onclick="abrirModalTurmas('${polo.id}')">Turmas</button>
           </div>
         </div>
-        <div class="polo-admin-body" style="flex-direction:column;align-items:flex-start;gap:10px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
-            <span class="polo-turmas-count"><span>${count}</span> turma${count !== 1 ? 's' : ''}</span>
-            <button class="btn btn-ghost btn-sm" onclick="deletarPolo('${polo.id}')" style="color:var(--red);font-size:.72rem;">🗑 Deletar polo</button>
-          </div>
-          <div class="espera-toggle">
-            <span>Lista de espera:</span>
-            <button class="btn btn-sm ${esperaAberta ? 'btn-green' : 'btn-red'}" onclick="toggleEspera('${polo.id}')" title="${esperaAberta ? 'Clique para bloquear' : 'Clique para liberar'}">
-              ${esperaAberta ? '🔓 Aberta' : '🔒 Bloqueada'}
-            </button>
-          </div>
+        <div class="polo-admin-body">
+          <span class="polo-turmas-count"><span>${count}</span> turma${count !== 1 ? 's' : ''}</span>
+          <button class="btn btn-ghost btn-sm" onclick="deletarPolo('${polo.id}')" style="color:var(--red);font-size:.72rem;">🗑 Deletar</button>
         </div>
       </div>`;
   }).join('');
@@ -905,18 +900,24 @@ async function deletarPolo(poloId) {
   }
 }
 
-// ── TOGGLE LISTA DE ESPERA ─────────────────────────────────
-async function toggleEspera(poloId) {
-  const aberta = esperaStatus[poloId] !== false;
+// ── LISTA DE ESPERA GLOBAL ────────────────────────────────
+function atualizarEsperaGlobal(aberta) {
+  const dot   = document.getElementById('esperaDot');
+  const label = document.getElementById('esperaLabel');
+  if (!dot) return;
+  dot.className   = 'status-dot ' + (aberta ? 'aberto' : 'fechado');
+  label.textContent = aberta ? 'Lista de espera aberta' : 'Lista de espera fechada';
+}
+
+async function setEsperaGlobal(aberta) {
   const r = await fetch('/api/switch', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ senha, polo: poloId, esperaAberta: !aberta })
+    body: JSON.stringify({ senha, esperaGlobal: aberta })
   });
   const d = await r.json();
   if (d.success) {
-    esperaStatus[poloId] = !aberta;
-    renderPolos();
-    mostrarMsg('switchMsg', !aberta ? `✓ Lista de espera aberta!` : `✕ Lista de espera bloqueada!`, 'ok');
+    atualizarEsperaGlobal(aberta);
+    mostrarMsg('switchMsg', aberta ? '🔓 Lista de espera aberta!' : '🔒 Lista de espera fechada!', 'ok');
   }
 }
 
