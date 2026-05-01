@@ -385,6 +385,34 @@
   .restore-bar p { font-size: .85rem; color: var(--sub); }
   .restore-bar p span { color: var(--accent); font-weight: 600; }
 
+  /* ── LISTA DE ESPERA TOGGLE ── */
+  .espera-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .82rem;
+    color: var(--sub);
+    margin-top: 8px;
+  }
+  .espera-toggle button { padding: 4px 10px; font-size: .72rem; }
+
+  /* ── NOVO POLO ── */
+  .novo-polo-bar {
+    background: var(--s2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .novo-polo-bar input {
+    flex: 1; min-width: 160px;
+    padding: 8px 12px; font-size: .88rem;
+  }
+
   @media (max-width: 600px) {
     .switch-card { flex-direction: column; align-items: flex-start; }
     .admin-header { flex-direction: column; align-items: flex-start; }
@@ -517,6 +545,7 @@ let polosStatus  = {};
 let editandoPolo = null;
 let editandoIdx  = null;
 let poloAtivo    = null;
+let esperaStatus = {};   // { polo-id: true/false }
 
 // ── LOGIN ──────────────────────────────────────────────────
 function entrar() {
@@ -550,8 +579,9 @@ async function carregarTudo() {
     }
 
     atualizarStatusDot(d.aberto);
-    dadosGlobais = d.turmas || {};
+    dadosGlobais = d.turmas      || {};
     polosStatus  = d.polosStatus || {};
+    esperaStatus = d.esperaStatus || {};
     renderPolos();
   } catch(e) {
     mostrarMsg('loginMsg', 'Erro de conexão', 'err');
@@ -591,24 +621,35 @@ function atualizarStatusDot(aberto) {
 function renderPolos() {
   const grid = document.getElementById('polosGrid');
   grid.innerHTML = POLOS.map(polo => {
-    const turmas     = dadosGlobais[polo.id] || [];
-    const poloAberto = polosStatus[polo.id] !== false;
-    const count      = turmas.length;
+    const turmas      = dadosGlobais[polo.id] || [];
+    const poloAberto  = polosStatus[polo.id] !== false;
+    const esperaAberta = esperaStatus[polo.id] !== false;
+    const count       = turmas.length;
 
     return `
       <div class="polo-admin-card">
         <div class="polo-admin-header">
           <h4 onclick="abrirModalTurmas('${polo.id}')">${polo.nome}</h4>
           <div style="display:flex;gap:6px;">
-            <button class="btn btn-sm ${poloAberto ? 'btn-red' : 'btn-green'}"
-              onclick="togglePolo('${polo.id}')">
-              ${poloAberto ? '✕ Fechar' : '✓ Abrir'}
+            <button class="btn btn-sm ${poloAberto ? 'btn-green' : 'btn-red'}"
+              onclick="togglePolo('${polo.id}')"
+              title="${poloAberto ? 'Clique para fechar' : 'Clique para abrir'}">
+              ${poloAberto ? '🔓 Aberto' : '🔒 Fechado'}
             </button>
             <button class="btn btn-accent btn-sm" onclick="abrirModalTurmas('${polo.id}')">Turmas</button>
           </div>
         </div>
-        <div class="polo-admin-body">
-          <span class="polo-turmas-count"><span>${count}</span> turma${count !== 1 ? 's' : ''} cadastrada${count !== 1 ? 's' : ''}</span>
+        <div class="polo-admin-body" style="flex-direction:column;align-items:flex-start;gap:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+            <span class="polo-turmas-count"><span>${count}</span> turma${count !== 1 ? 's' : ''}</span>
+            <button class="btn btn-ghost btn-sm" onclick="deletarPolo('${polo.id}')" style="color:var(--red);font-size:.72rem;">🗑 Deletar polo</button>
+          </div>
+          <div class="espera-toggle">
+            <span>Lista de espera:</span>
+            <button class="btn btn-sm ${esperaAberta ? 'btn-green' : 'btn-red'}" onclick="toggleEspera('${polo.id}')" title="${esperaAberta ? 'Clique para bloquear' : 'Clique para liberar'}">
+              ${esperaAberta ? '🔓 Aberta' : '🔒 Bloqueada'}
+            </button>
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -648,7 +689,7 @@ function renderTurmasModal() {
           ${t.form ? `<div class="turma-form">${t.form.replace('https://docs.google.com/forms/d/','').substring(0,40)}...</div>` : ''}
         </div>
         <div class="turma-actions">
-          <button class="btn btn-sm ${aberta ? 'btn-red' : 'btn-green'}" onclick="toggleTurma('${poloAtivo}', ${i})" title="${aberta ? 'Fechar' : 'Abrir'}">${aberta ? '✕' : '✓'}</button>
+          <button class="btn btn-sm ${aberta ? 'btn-green' : 'btn-red'}" onclick="toggleTurma('${poloAtivo}', ${i})" title="${aberta ? 'Clique para fechar' : 'Clique para abrir'}">${aberta ? '🔓' : '🔒'}</button>
           <button class="btn btn-ghost btn-sm" onclick="editarTurma('${poloAtivo}', ${i})" title="Editar">✎</button>
           <button class="btn btn-ghost btn-sm" onclick="removerTurma('${poloAtivo}', ${i})" title="Remover" style="color:var(--red)">🗑</button>
         </div>
@@ -809,6 +850,73 @@ async function restaurarDaPlanilha() {
     mostrarMsg('switchMsg', `✓ ${polos.length} polos restaurados da planilha!`, 'ok');
   } catch(e) {
     mostrarMsg('switchMsg', 'Erro ao restaurar: ' + e.message, 'err');
+  }
+}
+
+// ── CRIAR POLO ────────────────────────────────────────────
+async function criarPolo() {
+  const nome = document.getElementById('novoPoloNome').value.trim();
+  const id   = document.getElementById('novoPoloId').value.trim();
+
+  if (!nome || !id) return mostrarMsg('switchMsg', 'Preencha nome e ID do polo', 'err');
+  if (!id.startsWith('polo-')) return mostrarMsg('switchMsg', 'ID deve começar com "polo-"', 'err');
+  if (POLOS.find(p => p.id === id)) return mostrarMsg('switchMsg', 'Polo já existe', 'err');
+
+  // Adiciona na lista local
+  POLOS.push({ id, nome });
+  dadosGlobais[id] = [];
+  polosStatus[id]  = true;
+  esperaStatus[id] = true;
+
+  // Salva no Edge Config
+  const r = await fetch('/api/switch', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ senha, polo: id, turmas: [] })
+  });
+  const d = await r.json();
+
+  if (d.success) {
+    document.getElementById('novoPoloNome').value = '';
+    document.getElementById('novoPoloId').value   = '';
+    renderPolos();
+    mostrarMsg('switchMsg', `✓ Polo "${nome}" criado!`, 'ok');
+  }
+}
+
+// ── DELETAR POLO ───────────────────────────────────────────
+async function deletarPolo(poloId) {
+  const polo = POLOS.find(p => p.id === poloId);
+  if (!confirm(`Deletar "${polo?.nome}"? Todas as turmas serão removidas.`)) return;
+
+  const r = await fetch('/api/switch', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ senha, deletarPolo: poloId })
+  });
+  const d = await r.json();
+
+  if (d.success) {
+    const idx = POLOS.findIndex(p => p.id === poloId);
+    if (idx !== -1) POLOS.splice(idx, 1);
+    delete dadosGlobais[poloId];
+    delete polosStatus[poloId];
+    delete esperaStatus[poloId];
+    renderPolos();
+    mostrarMsg('switchMsg', `✓ Polo deletado!`, 'ok');
+  }
+}
+
+// ── TOGGLE LISTA DE ESPERA ─────────────────────────────────
+async function toggleEspera(poloId) {
+  const aberta = esperaStatus[poloId] !== false;
+  const r = await fetch('/api/switch', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ senha, polo: poloId, esperaAberta: !aberta })
+  });
+  const d = await r.json();
+  if (d.success) {
+    esperaStatus[poloId] = !aberta;
+    renderPolos();
+    mostrarMsg('switchMsg', !aberta ? `✓ Lista de espera aberta!` : `✕ Lista de espera bloqueada!`, 'ok');
   }
 }
 
