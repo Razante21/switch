@@ -465,6 +465,14 @@
   <!-- TURMAS -->
   <div class="section-title">Turmas por <span>Polo</span></div>
 
+  <!-- NOVO POLO -->
+  <div class="novo-polo-bar">
+    <input type="text" id="novoPoloNome" placeholder="Nome do polo (ex: Polo Centro)">
+    <input type="text" id="novoPoloId" placeholder="ID (ex: polo-centro)" style="max-width:200px;">
+    <input type="text" id="novoPoloEnd" placeholder="Endereço" style="max-width:260px;">
+    <button class="btn btn-accent btn-sm" onclick="criarPolo()">+ Criar polo</button>
+  </div>
+
   <div class="polos-grid" id="polosGrid">
     <!-- gerado por JS -->
   </div>
@@ -477,9 +485,15 @@
     <div class="modal-turmas-header">
       <h3 id="modalTurmasTitulo">Polo <span>FIEC</span></h3>
       <div class="modal-turmas-header-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editarEndereco()" title="Editar endereço">📍</button>
         <button class="btn btn-accent btn-sm" onclick="novaTurma(poloAtivo)">+ Turma</button>
         <button class="modal-close" onclick="fecharModalTurmas()">✕</button>
       </div>
+    </div>
+    <div id="enderecoEditBar" style="display:none;padding:12px 24px;border-bottom:1px solid var(--line);gap:8px;display:none;align-items:center;">
+      <input type="text" id="enderecoInput" placeholder="Endereço do polo" style="flex:1;">
+      <button class="btn btn-accent btn-sm" onclick="salvarEndereco()">Salvar</button>
+      <button class="btn btn-ghost btn-sm" onclick="fecharEndereco()">✕</button>
     </div>
     <div class="modal-turmas-body" id="modalTurmasBody"></div>
   </div>
@@ -549,6 +563,7 @@ let polosStatus  = {};
 let editandoPolo = null;
 let editandoIdx  = null;
 let poloAtivo    = null;
+let enderecos    = {};   // { polo-id: 'endereço' }
 
 
 // ── LOGIN ──────────────────────────────────────────────────
@@ -585,6 +600,7 @@ async function carregarTudo() {
     atualizarStatusDot(d.aberto);
     dadosGlobais  = d.turmas      || {};
     polosStatus   = d.polosStatus || {};
+    enderecos     = d.enderecos   || {};
     atualizarEsperaGlobal(d.esperaGlobal !== false);
     renderPolos();
   } catch(e) {
@@ -852,29 +868,56 @@ async function restaurarDaPlanilha() {
 async function criarPolo() {
   const nome = document.getElementById('novoPoloNome').value.trim();
   const id   = document.getElementById('novoPoloId').value.trim();
+  const end  = document.getElementById('novoPoloEnd').value.trim();
 
   if (!nome || !id) return mostrarMsg('switchMsg', 'Preencha nome e ID do polo', 'err');
   if (!id.startsWith('polo-')) return mostrarMsg('switchMsg', 'ID deve começar com "polo-"', 'err');
   if (POLOS.find(p => p.id === id)) return mostrarMsg('switchMsg', 'Polo já existe', 'err');
 
-  // Adiciona na lista local
   POLOS.push({ id, nome });
   dadosGlobais[id] = [];
   polosStatus[id]  = true;
-  esperaStatus[id] = true;
+  enderecos[id]    = end;
 
-  // Salva no Edge Config
-  const r = await fetch('/api/switch', {
+  // Salva turmas + endereço
+  await fetch('/api/switch', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ senha, polo: id, turmas: [] })
   });
-  const d = await r.json();
+  await fetch('/api/switch', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ senha, polo: id, endereco: end })
+  });
 
+  document.getElementById('novoPoloNome').value = '';
+  document.getElementById('novoPoloId').value   = '';
+  document.getElementById('novoPoloEnd').value  = '';
+  renderPolos();
+  mostrarMsg('switchMsg', `✓ Polo "${nome}" criado!`, 'ok');
+}
+
+// ── ENDEREÇO DO POLO ──────────────────────────────────────
+function editarEndereco() {
+  const bar = document.getElementById('enderecoEditBar');
+  document.getElementById('enderecoInput').value = enderecos[poloAtivo] || '';
+  bar.style.display = 'flex';
+}
+
+function fecharEndereco() {
+  document.getElementById('enderecoEditBar').style.display = 'none';
+}
+
+async function salvarEndereco() {
+  const end = document.getElementById('enderecoInput').value.trim();
+  const r = await fetch('/api/switch', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ senha, polo: poloAtivo, endereco: end })
+  });
+  const d = await r.json();
   if (d.success) {
-    document.getElementById('novoPoloNome').value = '';
-    document.getElementById('novoPoloId').value   = '';
-    renderPolos();
-    mostrarMsg('switchMsg', `✓ Polo "${nome}" criado!`, 'ok');
+    enderecos[poloAtivo] = end;
+    fecharEndereco();
+    mostrarMsg('switchMsg', '✓ Endereço salvo!', 'ok');
   }
 }
 

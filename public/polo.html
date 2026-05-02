@@ -1377,21 +1377,24 @@ const POLOS_INFO = {
 // ── INIT ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // Preenche nome e endereço do polo
-  const info = POLOS_INFO[POLO_ID] || { nome: POLO_ID, endereco: 'Indaiatuba/SP' };
+  const info = POLOS_INFO[POLO_ID] || { nome: POLO_ID, endereco: '' };
   const nomeEl     = document.getElementById('poloNome');
-  const endEl      = document.getElementById('poloEndereco');
   const sideNome   = document.getElementById('sidebarNome');
-  const sideEnd    = document.getElementById('sidebarEndereco');
   if (nomeEl)   nomeEl.textContent   = info.nome;
-  if (endEl)    endEl.textContent    = info.endereco;
   if (sideNome) sideNome.textContent = info.nome.replace('Polo ', '');
-  if (sideEnd)  sideEnd.textContent  = info.endereco;
   document.title = `${info.nome} · FIEC Educação Digital`;
   fetch(`${VERCEL_URL}?polo=${POLO_ID}`)
     .then(r => r.json())
     .then(data => {
       const overlay = document.getElementById('loadingOverlay');
       ultimoStatus = JSON.stringify({ aberto: data.aberto, turmas: data.turmas });
+
+      // Preenche endereço do Edge Config (tem prioridade sobre o hardcoded)
+      const enderecoFinal = data.endereco || info.endereco || 'Indaiatuba/SP';
+      const endEl  = document.getElementById('poloEndereco');
+      const sideEnd = document.getElementById('sidebarEndereco');
+      if (endEl)   endEl.textContent  = enderecoFinal;
+      if (sideEnd) sideEnd.textContent = enderecoFinal;
 
       renderTurmas(data.turmas);
       interceptarCliques();
