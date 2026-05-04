@@ -114,17 +114,21 @@ export default async function handler(req, res) {
     // Deletar polo
     if (body.deletarPolo) {
       try {
-        const [turmas, polosStatus] = await Promise.all([
+        const [turmas, polosStatus, enderecos] = await Promise.all([
           ecGet('turmas'),
-          ecGet('polosStatus')
+          ecGet('polosStatus'),
+          ecGet('enderecos')
         ]);
         const t = turmas      || {};
         const p = polosStatus || {};
+        const e = enderecos   || {};
         delete t[body.deletarPolo];
         delete p[body.deletarPolo];
+        delete e[body.deletarPolo];
         const ok = await ecSet([
           { operation: 'upsert', key: 'turmas',      value: t },
           { operation: 'upsert', key: 'polosStatus', value: p },
+          { operation: 'upsert', key: 'enderecos',   value: e },
         ]);
         if (ok) backupTurmas(t);
         return res.status(ok ? 200 : 500).json({ success: ok });

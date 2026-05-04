@@ -937,7 +937,7 @@ async function deletarPolo(poloId) {
     if (idx !== -1) POLOS.splice(idx, 1);
     delete dadosGlobais[poloId];
     delete polosStatus[poloId];
-    delete esperaStatus[poloId];
+    delete enderecos[poloId];
     renderPolos();
     mostrarMsg('switchMsg', `✓ Polo deletado!`, 'ok');
   }
