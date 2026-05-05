@@ -456,10 +456,16 @@
     </div>
   </div>
 
-  <!-- RESTAURAR BACKUP -->
-  <div class="restore-bar">
-    <p>Restaurar turmas da <span>planilha master</span> para o Edge Config</p>
-    <button class="btn btn-ghost btn-sm" onclick="restaurarDaPlanilha()">↓ Restaurar backup</button>
+  <!-- BACKUP E RESTAURAR -->
+  <div class="restore-bar" style="flex-direction:column;align-items:flex-start;gap:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:10px;">
+      <p>Enviar estado atual para a <span>planilha master</span></p>
+      <button class="btn btn-ghost btn-sm" onclick="fazerBackup()">↑ Fazer backup agora</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:10px;padding-top:10px;border-top:1px solid var(--line);">
+      <p>⚠️ <span>Emergência:</span> restaurar da planilha — sobrescreve tudo no Edge Config</p>
+      <button class="btn btn-ghost btn-sm" onclick="restaurarDaPlanilha()">↓ Restaurar emergência</button>
+    </div>
   </div>
 
   <!-- TURMAS -->
@@ -844,9 +850,32 @@ async function removerTurma(poloId, idx) {
   } catch(e) { alert('Erro de conexão'); }
 }
 
+// ── BACKUP MANUAL ─────────────────────────────────────────
+async function fazerBackup() {
+  try {
+    mostrarMsg('switchMsg', 'Enviando backup para a planilha...', 'ok');
+    const r = await fetch('/api/switch', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha, backupAgora: true })
+    });
+    const d = await r.json();
+    if (d.success) {
+      mostrarMsg('switchMsg', '✓ Backup enviado para a planilha!', 'ok');
+    } else {
+      mostrarMsg('switchMsg', d.error || 'Erro ao fazer backup', 'err');
+    }
+  } catch(e) {
+    mostrarMsg('switchMsg', 'Erro de conexão', 'err');
+  }
+}
+
 // ── RESTAURAR DA PLANILHA ─────────────────────────────────
 async function restaurarDaPlanilha() {
-  if (!confirm('Isso vai sobrescrever as turmas do Edge Config com os dados da planilha. Continuar?')) return;
+  if (!confirm('⚠️ ATENÇÃO: Isso vai APAGAR todos os dados atuais do Edge Config e substituir pelo que está na planilha.
+
+Use apenas em emergência quando o Edge Config perder os dados.
+
+Tem certeza?')) return;
 
   try {
     mostrarMsg('switchMsg', 'Buscando turmas da planilha...', 'ok');
