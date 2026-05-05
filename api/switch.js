@@ -118,6 +118,13 @@ export default async function handler(req, res) {
       return res.status(ok ? 200 : 500).json({ success: ok });
     }
 
+    // Backup manual imediato
+    if (body.backupAgora) {
+      const turmas = await ecGet('turmas') ?? {};
+      backupTurmas(turmas);
+      return res.status(200).json({ success: true });
+    }
+
     // Toggle lista de espera global
     if (body.esperaGlobal !== undefined) {
       const ok = await ecSet([{ operation: 'upsert', key: 'esperaGlobal', value: body.esperaGlobal }]);

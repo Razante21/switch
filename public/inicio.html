@@ -405,6 +405,11 @@ const BADGES = {
   'polo-bem-viver': 'Acima de 60 anos',
 };
 
+function formatarId(id) {
+  return 'Polo ' + id.replace('polo-', '').split('-')
+    .map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+}
+
 async function carregarPolos() {
   const grid = document.getElementById('polosGrid');
 
@@ -425,7 +430,7 @@ async function carregarPolos() {
 
     grid.innerHTML = '';
     ids.forEach((id, i) => {
-      const nome = nomes[id] || id;
+      const nome = nomes[id] || formatarId(id);
       const end  = enderecos[id] || '';
       const badge = BADGES[id] || '';
 
