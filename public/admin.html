@@ -924,10 +924,14 @@ async function criarPolo() {
   polosStatus[id]  = true;
   enderecos[id]    = end;
 
-  // Salva turmas, nome e endereço
+  // Salva turmas, polosStatus, nome e endereço
   await fetch('/api/switch', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ senha, polo: id, turmas: [] })
+  });
+  await fetch('/api/switch', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ senha, polo: id, poloAberto: true })
   });
   await fetch('/api/switch', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
