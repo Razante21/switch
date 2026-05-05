@@ -607,11 +607,8 @@ async function carregarTudo() {
     enderecos     = d.enderecos   || {};
     const nomes   = d.nomes       || {};
 
-    // Monta POLOS dinamicamente do Edge Config (usa polosStatus para incluir polos sem turmas)
-    const idsPolos = [...new Set([
-      ...Object.keys(dadosGlobais),
-      ...Object.keys(d.polosStatus || {})
-    ])];
+    // Monta POLOS dinamicamente do Edge Config — usa polosStatus como fonte de verdade
+    const idsPolos = Object.keys(d.polosStatus || {});
     POLOS = idsPolos.map(id => ({
       id,
       nome: nomes[id] || formatarId(id)
@@ -885,19 +882,32 @@ Tem certeza?')) return;
 
     if (!d.turmas) return mostrarMsg('switchMsg', 'Planilha sem turmas ou erro de conexão', 'err');
 
-    // Salva todas as turmas de uma vez via API especial
+    // Salva turmas de uma vez
     const r2 = await fetch('/api/switch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ senha, todasTurmas: d.turmas })
     });
     const d2 = await r2.json();
     if (!d2.success) return mostrarMsg('switchMsg', d2.error || 'Erro ao salvar', 'err');
 
+    // Restaura polosStatus, nomes e endereços da planilha
+    const ids = Object.keys(d.turmas);
+    for (const id of ids) {
+      await fetch('/api/switch', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senha, polo: id, poloAberto: true })
+      });
+      if (d.nomes?.[id] || d.enderecos?.[id]) {
+        await fetch('/api/switch', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ senha, polo: id, nome: d.nomes?.[id], endereco: d.enderecos?.[id] })
+        });
+      }
+    }
+
     dadosGlobais = d.turmas;
     renderPolos();
-    const polos = Object.keys(d.turmas);
-    mostrarMsg('switchMsg', `✓ ${polos.length} polos restaurados da planilha!`, 'ok');
+    mostrarMsg('switchMsg', `✓ ${ids.length} polos restaurados da planilha!`, 'ok');
   } catch(e) {
     mostrarMsg('switchMsg', 'Erro ao restaurar: ' + e.message, 'err');
   }

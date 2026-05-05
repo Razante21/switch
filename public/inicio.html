@@ -422,7 +422,8 @@ async function carregarPolos() {
     const enderecos = d.enderecos   || {};
     const nomes     = d.nomes       || {};
 
-    const ids = Object.keys(turmas);
+    // Usa polosStatus como fonte de verdade — evita polos fantasma
+    const ids = Object.keys(polos);
     if (ids.length === 0) {
       grid.innerHTML = '<div class="loading-polos">Nenhum polo disponível no momento.</div>';
       return;
