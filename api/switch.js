@@ -187,12 +187,11 @@ export default async function handler(req, res) {
       return res.status(ok ? 200 : 500).json({ success: ok });
     }
 
-    // Atualizar turmas de um polo
+    // Atualizar turmas de um polo (sem backup automático — use backupAgora para backup manual)
     if (body.polo && body.turmas !== undefined) {
       const atual = await ecGet('turmas') ?? {};
       atual[body.polo] = body.turmas;
       const ok = await ecSet([{ operation: 'upsert', key: 'turmas', value: atual }]);
-      if (ok) backupTurmas(atual);
       return res.status(ok ? 200 : 500).json({ success: ok });
     }
 
