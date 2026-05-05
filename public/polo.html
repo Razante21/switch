@@ -1373,7 +1373,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // Nome e endereço vêm do Edge Config
       const nomes    = data.nomes    || {};
       const enderecos = data.enderecos || {};
-      const nome      = nomes[POLO_ID]     || POLO_ID;
+      // Formata o ID como nome legível se não tiver nome salvo
+      function formatarId(id) {
+        return id.replace('polo-', '').split('-')
+          .map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+      }
+      const nome      = nomes[POLO_ID] || ('Polo ' + formatarId(POLO_ID));
       const endereco  = enderecos[POLO_ID] || '';
 
       const nomeEl  = document.getElementById('poloNome');

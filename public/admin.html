@@ -547,16 +547,13 @@
 <script>
 const API = '/api/switch';
 
-const POLOS = [
-  { id: 'polo-fiec',                   nome: 'Polo FIEC' },
-  { id: 'polo-ceu',                    nome: 'Polo CEU' },
-  { id: 'polo-sol-sol',                nome: 'Polo Sol-Sol' },
-  { id: 'polo-comunidade-independente',nome: 'Polo Comunidade Independente' },
-  { id: 'polo-casa-da-providencia',    nome: 'Polo Casa da Providência' },
-  { id: 'polo-jd-brasil',              nome: 'Polo Jardim Brasil' },
-  { id: 'polo-veredas',                nome: 'Polo Veredas' },
-  { id: 'polo-bem-viver',              nome: 'Polo Bem Viver' },
-];
+// Polos carregados dinamicamente do Edge Config
+let POLOS = [];
+
+function formatarId(id) {
+  return 'Polo ' + id.replace('polo-', '').split('-')
+    .map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+}
 
 let senha = '';
 let dadosGlobais = {};
@@ -564,7 +561,7 @@ let polosStatus  = {};
 let editandoPolo = null;
 let editandoIdx  = null;
 let poloAtivo    = null;
-let enderecos    = {};   // { polo-id: 'endereço' }
+let enderecos    = {};
 
 
 // ── LOGIN ──────────────────────────────────────────────────
@@ -602,6 +599,15 @@ async function carregarTudo() {
     dadosGlobais  = d.turmas      || {};
     polosStatus   = d.polosStatus || {};
     enderecos     = d.enderecos   || {};
+    const nomes   = d.nomes       || {};
+
+    // Monta POLOS dinamicamente do Edge Config
+    const ids = Object.keys(dadosGlobais);
+    POLOS = ids.map(id => ({
+      id,
+      nome: nomes[id] || formatarId(id)
+    }));
+
     atualizarEsperaGlobal(d.esperaGlobal !== false);
     renderPolos();
   } catch(e) {
