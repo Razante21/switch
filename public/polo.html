@@ -1362,39 +1362,29 @@ function animarCards() {
   });
 }
 
-// ── MAPA DE POLOS ────────────────────────────────────────
-const POLOS_INFO = {
-  'polo-fiec':                    { nome: 'Polo FIEC',                    endereco: 'Av. Eng. Fábio Roberto Barnabé, 3405 · Jardim Regina' },
-  'polo-ceu':                     { nome: 'Polo CEU',                     endereco: 'Rua Juntalino Fierô Bom, 1500 · Jardim São Conrado' },
-  'polo-sol-sol':                 { nome: 'Polo Sol-Sol',                 endereco: 'Rua Athayde Puccinelli, 30 · Jardim Flórida' },
-  'polo-bem-viver':               { nome: 'Polo Bem Viver',               endereco: 'Av. Eng. Fábio Roberto Barnabé, 505 · Vila Teller' },
-  'polo-casa-da-providencia':     { nome: 'Polo Casa da Providência',     endereco: 'Rua Aimore, 290 · Jardim Dionéia' },
-  'polo-jd-brasil':               { nome: 'Polo Jardim Brasil',           endereco: 'Rua Lourenço Martins do Amaral, 271 · Jardim Brasil' },
-  'polo-veredas':                 { nome: 'Polo Veredas',                 endereco: 'Rua Clarindo Cassimiro Barbosa, s/n · Jardim Veredas' },
-  'polo-comunidade-independente': { nome: 'Polo Comunidade Independente', endereco: 'Rua Alzira Barnabé, 240 · Jardim Tropical' },
-};
-
 // ── INIT ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Preenche nome e endereço do polo
-  const info = POLOS_INFO[POLO_ID] || { nome: POLO_ID, endereco: '' };
-  const nomeEl     = document.getElementById('poloNome');
-  const sideNome   = document.getElementById('sidebarNome');
-  if (nomeEl)   nomeEl.textContent   = info.nome;
-  if (sideNome) sideNome.textContent = info.nome.replace('Polo ', '');
-  document.title = `${info.nome} · FIEC Educação Digital`;
   fetch(`${VERCEL_URL}?polo=${POLO_ID}`)
     .then(r => r.json())
     .then(data => {
       const overlay = document.getElementById('loadingOverlay');
       ultimoStatus = JSON.stringify({ aberto: data.aberto, turmas: data.turmas });
 
-      // Preenche endereço do Edge Config (tem prioridade sobre o hardcoded)
-      const enderecoFinal = data.endereco || info.endereco || 'Indaiatuba/SP';
-      const endEl  = document.getElementById('poloEndereco');
-      const sideEnd = document.getElementById('sidebarEndereco');
-      if (endEl)   endEl.textContent  = enderecoFinal;
-      if (sideEnd) sideEnd.textContent = enderecoFinal;
+      // Nome e endereço vêm do Edge Config
+      const nomes    = data.nomes    || {};
+      const enderecos = data.enderecos || {};
+      const nome      = nomes[POLO_ID]     || POLO_ID;
+      const endereco  = enderecos[POLO_ID] || '';
+
+      const nomeEl  = document.getElementById('poloNome');
+      const endEl   = document.getElementById('poloEndereco');
+      const sideNome = document.getElementById('sidebarNome');
+      const sideEnd  = document.getElementById('sidebarEndereco');
+      if (nomeEl)   nomeEl.textContent   = nome;
+      if (endEl)    endEl.textContent    = endereco;
+      if (sideNome) sideNome.textContent = nome.replace('Polo ', '');
+      if (sideEnd)  sideEnd.textContent  = endereco;
+      document.title = `${nome} · FIEC Educação Digital`;
 
       renderTurmas(data.turmas);
       interceptarCliques();

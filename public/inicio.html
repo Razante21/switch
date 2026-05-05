@@ -400,80 +400,54 @@
 const VERCEL_URL = 'https://admin-fiec.vercel.app/api/switch';
 const POLO_URL   = 'https://admin-fiec.vercel.app/polo.html';
 
-// Dados locais como fallback (endereços e badges especiais)
-const POLOS_INFO = {
-  'polo-fiec':                    { nome: 'Polo FIEC',                    endereco: 'Av. Eng. Fábio Roberto Barnabé, 3405\nJardim Regina' },
-  'polo-ceu':                     { nome: 'Polo CEU',                     endereco: 'Rua Juntalino Fierô Bom, 1500\nJardim São Conrado' },
-  'polo-sol-sol':                 { nome: 'Polo Sol-Sol',                 endereco: 'Rua Athayde Puccinelli, 30\nJardim Flórida' },
-  'polo-bem-viver':               { nome: 'Polo Bem Viver',               endereco: 'Av. Eng. Fábio Roberto Barnabé, 505\nVila Teller', badge: 'Acima de 60 anos' },
-  'polo-casa-da-providencia':     { nome: 'Polo Casa da Providência',     endereco: 'Rua Aimore, 290\nJardim Dionéia' },
-  'polo-jd-brasil':               { nome: 'Polo Jardim Brasil',           endereco: 'Rua Lourenço Martins do Amaral, 271\nJardim Brasil' },
-  'polo-veredas':                 { nome: 'Polo Veredas',                 endereco: 'Rua Clarindo Cassimiro Barbosa, s/n\nJardim Veredas' },
-  'polo-comunidade-independente': { nome: 'Polo Comunidade Independente', endereco: 'Rua Alzira Barnabé, 240\nJardim Tropical' },
+// Badges especiais por polo (só isso fica hardcoded)
+const BADGES = {
+  'polo-bem-viver': 'Acima de 60 anos',
 };
 
 async function carregarPolos() {
+  const grid = document.getElementById('polosGrid');
+
   try {
     const r = await fetch(VERCEL_URL);
     const d = await r.json();
 
-    const turmas     = d.turmas     || {};
-    const polos      = d.polosStatus || {};
-    const enderecos  = d.enderecos  || {};
+    const turmas    = d.turmas      || {};
+    const polos     = d.polosStatus || {};
+    const enderecos = d.enderecos   || {};
+    const nomes     = d.nomes       || {};
 
-    // Monta lista de polos que têm turmas OU estão no POLOS_INFO
-    const idsConhecidos = Object.keys(POLOS_INFO);
-    const idsEdge = Object.keys(turmas);
-    const todos = [...new Set([...idsConhecidos, ...idsEdge])];
+    const ids = Object.keys(turmas);
+    if (ids.length === 0) {
+      grid.innerHTML = '<div class="loading-polos">Nenhum polo disponível no momento.</div>';
+      return;
+    }
 
-    const grid = document.getElementById('polosGrid');
     grid.innerHTML = '';
-
-    todos.forEach((id, i) => {
-      const info    = POLOS_INFO[id] || { nome: id, endereco: '' };
-      const aberto  = polos[id] !== false;
-      const end     = enderecos[id] || info.endereco || '';
-      const count   = (turmas[id] || []).length;
+    ids.forEach((id, i) => {
+      const nome = nomes[id] || id;
+      const end  = enderecos[id] || '';
+      const badge = BADGES[id] || '';
 
       const card = document.createElement('a');
       card.className = 'polo-card';
       card.href = `${POLO_URL}?id=${id}`;
       card.innerHTML = `
         <span class="polo-card-tag">Unidade</span>
-        ${info.badge ? `<span class="polo-card-badge">${info.badge}</span>` : ''}
-        <h3>${info.nome}</h3>
+        ${badge ? `<span class="polo-card-badge">${badge}</span>` : ''}
+        <h3>${nome}</h3>
         <p class="polo-card-end">${end.replace(/\n/g, '<br>')}</p>
         <span class="polo-card-cta">
           Acessar polo
           <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>
         </span>
       `;
-
       grid.appendChild(card);
       setTimeout(() => card.classList.add('visible'), 80 * i);
     });
 
   } catch(e) {
-    // Fallback: mostra polos do POLOS_INFO
-    const grid = document.getElementById('polosGrid');
-    grid.innerHTML = '';
-    Object.entries(POLOS_INFO).forEach(([id, info], i) => {
-      const card = document.createElement('a');
-      card.className = 'polo-card';
-      card.href = `${POLO_URL}?id=${id}`;
-      card.innerHTML = `
-        <span class="polo-card-tag">Unidade</span>
-        ${info.badge ? `<span class="polo-card-badge">${info.badge}</span>` : ''}
-        <h3>${info.nome}</h3>
-        <p class="polo-card-end">${(info.endereco || '').replace(/\n/g, '<br>')}</p>
-        <span class="polo-card-cta">
-          Acessar polo
-          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>
-        </span>
-      `;
-      grid.appendChild(card);
-      setTimeout(() => card.classList.add('visible'), 80 * i);
-    });
+    grid.innerHTML = '<div class="loading-polos">Erro ao carregar polos.</div>';
   }
 }
 

@@ -45,11 +45,13 @@ export default async function handler(req, res) {
   // ── GET ───────────────────────────────────────────────────
   if (req.method === 'GET') {
     try {
-      const [inscricoes, turmasTodas, polosStatus, esperaGlobal] = await Promise.all([
+      const [inscricoes, turmasTodas, polosStatus, esperaGlobal, enderecos, nomes] = await Promise.all([
         ecGet('inscricoes'),
         ecGet('turmas'),
         ecGet('polosStatus'),
-        ecGet('esperaGlobal')
+        ecGet('esperaGlobal'),
+        ecGet('enderecos'),
+        ecGet('nomes')
       ]);
 
       const aberto = inscricoes !== 'FECHADO';
@@ -57,11 +59,17 @@ export default async function handler(req, res) {
       const turmas = polo ? (turmasTodas?.[polo] ?? []) : (turmasTodas ?? {});
       const poloAberto = polo ? (polosStatus?.[polo] !== false) : undefined;
 
+      const enderecosPolo = enderecos ?? {};
+      const nomesPolo     = nomes     ?? {};
       return res.status(200).json({
         aberto,
         turmas,
         polosStatus:  polosStatus ?? {},
         esperaGlobal: esperaGlobal !== false,
+        enderecos:    enderecosPolo,
+        nomes:        nomesPolo,
+        endereco:     polo ? (enderecosPolo[polo] || '') : undefined,
+        poloNome:     polo ? (nomesPolo[polo]     || '') : undefined,
         ...(polo !== undefined ? { poloAberto } : {})
       });
     } catch(e) {
@@ -93,6 +101,23 @@ export default async function handler(req, res) {
       return res.status(ok ? 200 : 500).json({ success: ok });
     }
 
+    // Atualizar endereço e/ou nome de um polo
+    if (body.polo && (body.endereco !== undefined || body.nome !== undefined)) {
+      const [atualEnd, atualNomes] = await Promise.all([
+        ecGet('enderecos') ?? {},
+        ecGet('nomes')     ?? {}
+      ]);
+      const e = atualEnd   || {};
+      const n = atualNomes || {};
+      if (body.endereco !== undefined) e[body.polo] = body.endereco;
+      if (body.nome     !== undefined) n[body.polo] = body.nome;
+      const ok = await ecSet([
+        { operation: 'upsert', key: 'enderecos', value: e },
+        { operation: 'upsert', key: 'nomes',     value: n },
+      ]);
+      return res.status(ok ? 200 : 500).json({ success: ok });
+    }
+
     // Toggle lista de espera global
     if (body.esperaGlobal !== undefined) {
       const ok = await ecSet([{ operation: 'upsert', key: 'esperaGlobal', value: body.esperaGlobal }]);
@@ -102,17 +127,25 @@ export default async function handler(req, res) {
     // Deletar polo
     if (body.deletarPolo) {
       try {
-        const [turmas, polosStatus] = await Promise.all([
+        const [turmas, polosStatus, enderecos] = await Promise.all([
           ecGet('turmas'),
-          ecGet('polosStatus')
+          ecGet('polosStatus'),
+          ecGet('enderecos')
         ]);
         const t = turmas      || {};
         const p = polosStatus || {};
+        const e = enderecos   || {};
         delete t[body.deletarPolo];
         delete p[body.deletarPolo];
+        delete e[body.deletarPolo];
+        const nomesTodos = await ecGet('nomes') ?? {};
+        const n = nomesTodos || {};
+        delete n[body.deletarPolo];
         const ok = await ecSet([
           { operation: 'upsert', key: 'turmas',      value: t },
           { operation: 'upsert', key: 'polosStatus', value: p },
+          { operation: 'upsert', key: 'enderecos',   value: e },
+          { operation: 'upsert', key: 'nomes',       value: n },
         ]);
         if (ok) backupTurmas(t);
         return res.status(ok ? 200 : 500).json({ success: ok });

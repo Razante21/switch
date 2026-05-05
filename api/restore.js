@@ -14,15 +14,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const url = `${MASTER_URL}?action=getTurmas`;
-    const r = await fetch(url);
-    const text = await r.text();
-    // Loga o que recebeu para debug
-    console.log('URL chamada:', url);
-    console.log('Resposta raw:', text.substring(0, 200));
-    const d = JSON.parse(text);
+    const r = await fetch(`${MASTER_URL}?action=getTurmas`);
+    const d = await r.json();
     return res.status(200).json(d);
   } catch(e) {
-    return res.status(500).json({ error: e.message, url: MASTER_URL });
+    return res.status(500).json({ error: e.message });
   }
 }

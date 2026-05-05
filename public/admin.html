@@ -490,8 +490,9 @@
         <button class="modal-close" onclick="fecharModalTurmas()">✕</button>
       </div>
     </div>
-    <div id="enderecoEditBar" style="display:none;padding:12px 24px;border-bottom:1px solid var(--line);gap:8px;display:none;align-items:center;">
-      <input type="text" id="enderecoInput" placeholder="Endereço do polo" style="flex:1;">
+    <div id="enderecoEditBar" style="display:none;padding:12px 24px;border-bottom:1px solid var(--line);gap:8px;display:none;align-items:center;flex-wrap:wrap;">
+      <input type="text" id="nomeInput" placeholder="Nome do polo" style="max-width:200px;">
+      <input type="text" id="enderecoInput" placeholder="Endereço do polo" style="flex:1;min-width:180px;">
       <button class="btn btn-accent btn-sm" onclick="salvarEndereco()">Salvar</button>
       <button class="btn btn-ghost btn-sm" onclick="fecharEndereco()">✕</button>
     </div>
@@ -879,14 +880,14 @@ async function criarPolo() {
   polosStatus[id]  = true;
   enderecos[id]    = end;
 
-  // Salva turmas + endereço
+  // Salva turmas, nome e endereço
   await fetch('/api/switch', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ senha, polo: id, turmas: [] })
   });
   await fetch('/api/switch', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ senha, polo: id, endereco: end })
+    body: JSON.stringify({ senha, polo: id, nome, endereco: end })
   });
 
   document.getElementById('novoPoloNome').value = '';
@@ -899,6 +900,8 @@ async function criarPolo() {
 // ── ENDEREÇO DO POLO ──────────────────────────────────────
 function editarEndereco() {
   const bar = document.getElementById('enderecoEditBar');
+  const polo = POLOS.find(p => p.id === poloAtivo);
+  document.getElementById('nomeInput').value     = polo?.nome || '';
   document.getElementById('enderecoInput').value = enderecos[poloAtivo] || '';
   bar.style.display = 'flex';
 }
@@ -908,10 +911,12 @@ function fecharEndereco() {
 }
 
 async function salvarEndereco() {
-  const end = document.getElementById('enderecoInput').value.trim();
+  const end  = document.getElementById('enderecoInput').value.trim();
+  const nomeInput = document.getElementById('nomeInput');
+  const nomeVal   = nomeInput ? nomeInput.value.trim() : undefined;
   const r = await fetch('/api/switch', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ senha, polo: poloAtivo, endereco: end })
+    body: JSON.stringify({ senha, polo: poloAtivo, endereco: end, ...(nomeVal ? { nome: nomeVal } : {}) })
   });
   const d = await r.json();
   if (d.success) {
