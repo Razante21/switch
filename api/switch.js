@@ -42,6 +42,17 @@ export default async function handler(req, res) {
     } catch(e) {}
   }
 
+  async function backupPolos(polosStatus, nomes, enderecos) {
+    if (!MASTER_URL) return;
+    try {
+      await fetch(MASTER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: 'backupPolos', polos: polosStatus, nomes, enderecos })
+      });
+    } catch(e) {}
+  }
+
   // ── GET ───────────────────────────────────────────────────
   if (req.method === 'GET') {
     try {
@@ -118,10 +129,16 @@ export default async function handler(req, res) {
       return res.status(ok ? 200 : 500).json({ success: ok });
     }
 
-    // Backup manual imediato
+    // Backup manual imediato (turmas + polos)
     if (body.backupAgora) {
-      const turmas = await ecGet('turmas') ?? {};
-      backupTurmas(turmas);
+      const [turmas, polosStatus, nomes, enderecos] = await Promise.all([
+        ecGet('turmas'),
+        ecGet('polosStatus'),
+        ecGet('nomes'),
+        ecGet('enderecos')
+      ]);
+      backupTurmas(turmas || {});
+      backupPolos(polosStatus || {}, nomes || {}, enderecos || {});
       return res.status(200).json({ success: true });
     }
 
@@ -154,7 +171,10 @@ export default async function handler(req, res) {
           { operation: 'upsert', key: 'enderecos',   value: e },
           { operation: 'upsert', key: 'nomes',       value: n },
         ]);
-        if (ok) backupTurmas(t);
+        if (ok) {
+          backupTurmas(t);
+          backupPolos(p, n, e);
+        }
         return res.status(ok ? 200 : 500).json({ success: ok });
       } catch(e) {
         return res.status(500).json({ error: e.message });
