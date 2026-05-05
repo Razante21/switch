@@ -868,11 +868,7 @@ async function fazerBackup() {
 
 // ── RESTAURAR DA PLANILHA ─────────────────────────────────
 async function restaurarDaPlanilha() {
-  if (!confirm('⚠️ ATENÇÃO: Isso vai APAGAR todos os dados atuais do Edge Config e substituir pelo que está na planilha.
-
-Use apenas em emergência quando o Edge Config perder os dados.
-
-Tem certeza?')) return;
+  if (!confirm('⚠️ ATENÇÃO: Isso vai APAGAR todos os dados atuais do Edge Config e substituir pelo que está na planilha.\n\nUse apenas em emergência quando o Edge Config perder os dados.\n\nTem certeza?')) return;
 
   try {
     mostrarMsg('switchMsg', 'Buscando turmas da planilha...', 'ok');
