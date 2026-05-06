@@ -673,7 +673,10 @@ function renderPolos() {
         </div>
         <div class="polo-admin-body">
           <span class="polo-turmas-count"><span>${count}</span> turma${count !== 1 ? 's' : ''}</span>
-          <button class="btn btn-ghost btn-sm" onclick="deletarPolo('${polo.id}')" style="color:var(--red);font-size:.72rem;">🗑 Deletar</button>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="copiarUrl('${polo.id}')" title="Copiar URL para Google Sites" style="font-size:.72rem;">🔗 URL</button>
+            <button class="btn btn-ghost btn-sm" onclick="deletarPolo('${polo.id}')" style="color:var(--red);font-size:.72rem;">🗑 Deletar</button>
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -1021,6 +1024,23 @@ async function setEsperaGlobal(aberta) {
     atualizarEsperaGlobal(aberta);
     mostrarMsg('switchMsg', aberta ? '🔓 Lista de espera aberta!' : '🔒 Lista de espera fechada!', 'ok');
   }
+}
+
+// ── COPIAR URL ────────────────────────────────────────────
+function copiarUrl(poloId) {
+  const url = `https://admin-fiec.vercel.app/polo.html?id=${poloId}`;
+  navigator.clipboard.writeText(url).then(() => {
+    mostrarMsg('switchMsg', `✓ URL copiada: ${url}`, 'ok');
+  }).catch(() => {
+    // Fallback para navegadores que não suportam clipboard
+    const el = document.createElement('textarea');
+    el.value = url;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    mostrarMsg('switchMsg', `✓ URL copiada: ${url}`, 'ok');
+  });
 }
 
 // ── HELPERS ────────────────────────────────────────────────
