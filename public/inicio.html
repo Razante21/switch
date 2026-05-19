@@ -356,8 +356,8 @@
 <!-- HEADER -->
 <header class="header">
   <div class="header-inner">
-    <span class="header-eyebrow" id="eyebrowTexto">Programa de Educação Digital · 2026</span>
-    <h1 id="tituloInscricoes">Inscrições 2026</h1>
+    <span class="header-eyebrow" id="eyebrowTexto" style="display:none;">Programa de Educação Digital · 2026</span>
+    <h1 id="tituloInscricoes" style="display:none;">Inscrições 2026</h1>
     <div class="header-ornament">
       <div class="header-ornament-line"></div>
       <div class="header-ornament-dot"></div>
@@ -368,14 +368,14 @@
 </header>
 
 <!-- DATAS -->
-<div class="datas-section">
+<div class="datas-section" id="datasSection" style="display:none;">
   <div class="data-chip">
     <div class="data-chip-dot"></div>
-    Aulas de <strong>2ª e 4ª feira</strong> começam em <strong>03/08/2026</strong>
+    Aulas de <strong>2ª e 4ª feira</strong> começam em <strong id="data24"></strong>
   </div>
   <div class="data-chip">
     <div class="data-chip-dot"></div>
-    Aulas de <strong>3ª e 5ª feira</strong> começam em <strong>04/08/2026</strong>
+    Aulas de <strong>3ª e 5ª feira</strong> começam em <strong id="data35"></strong>
   </div>
 </div>
 
@@ -416,13 +416,24 @@ async function carregarPolos() {
     const nomes     = d.nomes       || {};
     const configs   = d.configs     || {};
 
-    // Atualiza datas e título do Edge Config
+    // Atualiza título e eyebrow — sem fallback, só aparece se tiver salvo
     if (configs.titulo) {
-      document.getElementById('tituloInscricoes').textContent = configs.titulo;
+      const el = document.getElementById('tituloInscricoes');
+      el.textContent = configs.titulo;
+      el.style.display = '';
     }
-    if (configs.eyebrow)  document.getElementById('eyebrowTexto').textContent     = configs.eyebrow;
-    if (configs.data24) document.getElementById('data24').textContent = configs.data24;
-    if (configs.data35) document.getElementById('data35').textContent = configs.data35;
+    if (configs.eyebrow) {
+      const el = document.getElementById('eyebrowTexto');
+      el.textContent = configs.eyebrow;
+      el.style.display = '';
+    }
+
+    // Chips de datas — só aparecem se tiver data salva
+    if (configs.data24 || configs.data35) {
+      if (configs.data24) document.getElementById('data24').textContent = configs.data24;
+      if (configs.data35) document.getElementById('data35').textContent = configs.data35;
+      document.getElementById('datasSection').style.display = '';
+    }
 
     // Usa polosStatus como fonte de verdade — evita polos fantasma
     const ids = Object.keys(polos);

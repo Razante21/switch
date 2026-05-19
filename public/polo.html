@@ -1117,8 +1117,8 @@
     <a href="https://sites.google.com/fiec.com.br/inclusodigitalfiec-2025/in%C3%ADcio_1" class="btn-voltar">
       <svg><use href="#ico-back"/></svg> Todos os polos
     </a>
-    <span class="header-eyebrow" id="eyebrowTexto">Programa de Educação Digital · 2026</span>
-    <h1 id="poloNome">Carregando...</h1>
+    <span class="header-eyebrow" id="eyebrowTexto" style="display:none;"></span>
+    <h1 id="poloNome" style="display:none;"></h1>
     <div class="header-ornament">
       <div class="header-ornament-line"></div>
       <div class="header-ornament-dot"></div>
@@ -1148,7 +1148,7 @@
   <main>
     <!-- TÍTULO + BALÃO DE DATAS -->
     <div class="inscricoes-header">
-      <h2 class="inscricoes-title" id="tituloInscricoes" data-titulo="Inscrições 2026">Inscrições <span>2026</span></h2>
+      <h2 class="inscricoes-title" id="tituloInscricoes" style="display:none;">Inscrições <span>2026</span></h2>
     </div>
 
     <div class="datas-balao" id="datasBalao" style="display:none;">
@@ -1369,7 +1369,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const endEl   = document.getElementById('poloEndereco');
       const sideNome = document.getElementById('sidebarNome');
       const sideEnd  = document.getElementById('sidebarEndereco');
-      if (nomeEl)   nomeEl.textContent   = nome;
+      if (nomeEl)   { nomeEl.textContent = nome; nomeEl.style.display = ''; }
       if (endEl)    endEl.textContent    = endereco;
       if (sideNome) sideNome.textContent = nome.replace('Polo ', '');
       if (sideEnd)  sideEnd.textContent  = endereco;
@@ -1377,19 +1377,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Atualiza datas e título do Edge Config
       const configs = data.configs || {};
-      if (configs.eyebrow) { const ey = document.getElementById('eyebrowTexto'); if(ey) ey.textContent = configs.eyebrow; }
-      if (configs.titulo) {
-        el.setAttribute('data-titulo', configs.titulo);
-        const el = document.getElementById('tituloInscricoes');
-        if (el) {
+
+      // Eyebrow — mostra sempre após fetch
+      const ey = document.getElementById('eyebrowTexto');
+      if (ey) { ey.textContent = configs.eyebrow || 'Programa de Educação Digital · 2026'; ey.style.display = ''; }
+
+      // Título — esconde se não tiver salvo
+      const tituloEl = document.getElementById('tituloInscricoes');
+      if (tituloEl) {
+        if (configs.titulo) {
           const partes = configs.titulo.split(' ');
           const ano = partes[partes.length - 1];
           const resto = partes.slice(0, -1).join(' ');
-          el.innerHTML = `${resto} <span>${ano}</span>`;
+          tituloEl.innerHTML = `${resto} <span>${ano}</span>`;
+          tituloEl.style.display = '';
+        } else {
+          tituloEl.style.display = 'none';
         }
       }
-      if (configs.data24) { const el = document.getElementById('data24'); if(el) el.textContent = configs.data24; }
-      if (configs.data35) { const el = document.getElementById('data35'); if(el) el.textContent = configs.data35; }
+
+      // Chips de datas — só aparecem se tiver data salva
+      const datasBalao = document.getElementById('datasBalao');
+      if (configs.data24 || configs.data35) {
+        const d24 = document.getElementById('data24');
+        const d35 = document.getElementById('data35');
+        if (d24 && configs.data24) d24.textContent = configs.data24;
+        if (d35 && configs.data35) d35.textContent = configs.data35;
+        if (datasBalao) datasBalao.style.display = '';
+      }
       if (configs.linkEspera) {
         document.querySelectorAll('[class-espera]').forEach(el => {
           el.href = configs.linkEspera;
