@@ -332,23 +332,7 @@
     animation: fadeUp .7s .25s ease-out forwards;
   }
   /* Borda dourada percorrendo o título */
-  .header-polo h1::before {
-    content: 'Polo FIEC';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(110deg,
-      transparent 30%,
-      var(--accent2) 48%,
-      #fff 50%,
-      var(--accent2) 52%,
-      transparent 70%);
-    background-size: 250% 100%;
-    background-position: var(--shimmer) 0;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: title-shimmer 6s ease-in-out infinite;
-  }
+
   @keyframes title-shimmer {
     0%, 20%   { --shimmer: -50%; }
     50%       { --shimmer: 150%; }

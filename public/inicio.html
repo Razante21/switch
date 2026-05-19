@@ -133,26 +133,18 @@
     font-size: clamp(3rem, 9vw, 6rem);
     letter-spacing: -.03em;
     line-height: .9;
-    background: linear-gradient(180deg, #fff 0%, #d8e0e8 50%, #8a9aab 100%);
+    background: linear-gradient(110deg,
+      #8a9aab 0%, #d8e0e8 20%, #fff 40%,
+      var(--accent2) 48%, #fff 50%, var(--accent2) 52%,
+      #fff 60%, #d8e0e8 80%, #8a9aab 100%);
+    background-size: 250% 100%;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    opacity: 0;
-    animation: fadeUp .7s .25s ease-out forwards;
+    animation: fadeUp .7s .25s ease-out forwards, title-shimmer 6s ease-in-out infinite;
     position: relative;
   }
-  .header h1::before {
-    content: attr(data-titulo);
-    position: absolute; inset: 0;
-    background: linear-gradient(110deg,
-      transparent 30%, var(--accent2) 48%, #fff 50%, var(--accent2) 52%, transparent 70%);
-    background-size: 250% 100%;
-    background-position: var(--shimmer) 0;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: title-shimmer 6s ease-in-out infinite;
-  }
+
   @keyframes title-shimmer {
     0%,20% { --shimmer: -50%; }
     50%    { --shimmer: 150%; }
@@ -426,9 +418,7 @@ async function carregarPolos() {
 
     // Atualiza datas e título do Edge Config
     if (configs.titulo) {
-      const el = document.getElementById('tituloInscricoes');
-      el.textContent = configs.titulo;
-      el.setAttribute('data-titulo', configs.titulo);
+      document.getElementById('tituloInscricoes').textContent = configs.titulo;
     }
     if (configs.eyebrow)  document.getElementById('eyebrowTexto').textContent     = configs.eyebrow;
     if (configs.data24) document.getElementById('data24').textContent = configs.data24;
