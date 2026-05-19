@@ -363,7 +363,7 @@
 <!-- HEADER -->
 <header class="header">
   <div class="header-inner">
-    <span class="header-eyebrow">Programa de Educação Digital · 2026</span>
+    <span class="header-eyebrow" id="eyebrowTexto">Programa de Educação Digital · 2026</span>
     <h1 id="tituloInscricoes">Inscrições 2026</h1>
     <div class="header-ornament">
       <div class="header-ornament-line"></div>
@@ -424,7 +424,8 @@ async function carregarPolos() {
     const configs   = d.configs     || {};
 
     // Atualiza datas e título do Edge Config
-    if (configs.titulo) document.getElementById('tituloInscricoes').textContent = configs.titulo;
+    if (configs.titulo)   document.getElementById('tituloInscricoes').textContent = configs.titulo;
+    if (configs.eyebrow)  document.getElementById('eyebrowTexto').textContent     = configs.eyebrow;
     if (configs.data24) document.getElementById('data24').textContent = configs.data24;
     if (configs.data35) document.getElementById('data35').textContent = configs.data35;
 

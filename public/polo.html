@@ -1133,7 +1133,7 @@
     <a href="https://sites.google.com/fiec.com.br/inclusodigitalfiec-2025/in%C3%ADcio_1" class="btn-voltar">
       <svg><use href="#ico-back"/></svg> Todos os polos
     </a>
-    <span class="header-eyebrow">Programa de Educação Digital · 2026</span>
+    <span class="header-eyebrow" id="eyebrowTexto">Programa de Educação Digital · 2026</span>
     <h1 id="poloNome">Carregando...</h1>
     <div class="header-ornament">
       <div class="header-ornament-line"></div>
@@ -1393,6 +1393,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Atualiza datas e título do Edge Config
       const configs = data.configs || {};
+      if (configs.eyebrow) { const ey = document.getElementById('eyebrowTexto'); if(ey) ey.textContent = configs.eyebrow; }
       if (configs.titulo) {
         const el = document.getElementById('tituloInscricoes');
         if (el) {

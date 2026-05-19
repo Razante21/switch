@@ -54,6 +54,7 @@ async function carregarTudo() {
     const configs = d.configs     || {};
 
     if (configs.titulo)     document.getElementById('cfgTitulo').value     = configs.titulo;
+    if (configs.eyebrow)    document.getElementById('cfgEyebrow').value    = configs.eyebrow;
     if (configs.dataEvento) document.getElementById('cfgDataEvento').value = configs.dataEvento;
     if (configs.data24)     document.getElementById('cfgData24').value     = configs.data24;
     if (configs.data35)     document.getElementById('cfgData35').value     = configs.data35;
@@ -506,6 +507,7 @@ function copiarUrl(poloId) {
 async function salvarConfigs() {
   const configs = {
     titulo:     document.getElementById('cfgTitulo').value.trim(),
+    eyebrow:    document.getElementById('cfgEyebrow').value.trim(),
     dataEvento: document.getElementById('cfgDataEvento').value.trim(),
     data24:     document.getElementById('cfgData24').value.trim(),
     data35:     document.getElementById('cfgData35').value.trim(),
