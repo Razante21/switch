@@ -6,6 +6,7 @@
 <title>Inscrições · FIEC Educação Digital</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  :root { --titulo-inscricoes: 'Inscrições 2026'; }
   @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
   @property --shimmer { syntax: '<percentage>'; initial-value: -50%; inherits: false; }
 
@@ -141,7 +142,7 @@
     position: relative;
   }
   .header h1::before {
-    content: 'Inscrições 2026';
+    content: var(--titulo-inscricoes, 'Inscrições 2026');
     position: absolute; inset: 0;
     background: linear-gradient(110deg,
       transparent 30%, var(--accent2) 48%, #fff 50%, var(--accent2) 52%, transparent 70%);
@@ -424,7 +425,10 @@ async function carregarPolos() {
     const configs   = d.configs     || {};
 
     // Atualiza datas e título do Edge Config
-    if (configs.titulo)   document.getElementById('tituloInscricoes').textContent = configs.titulo;
+    if (configs.titulo) {
+      document.getElementById('tituloInscricoes').textContent = configs.titulo;
+      document.documentElement.style.setProperty('--titulo-inscricoes', `'${configs.titulo}'`);
+    }
     if (configs.eyebrow)  document.getElementById('eyebrowTexto').textContent     = configs.eyebrow;
     if (configs.data24) document.getElementById('data24').textContent = configs.data24;
     if (configs.data35) document.getElementById('data35').textContent = configs.data35;
