@@ -1,100 +1,231 @@
 <!DOCTYPE html>
-<!-- LOGIN - FIEC Admin -->
+<!-- LOGIN - FIEC Admin v4.0 (Carbon theme) -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login · Admin FIEC</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:      #050a11;
-    --surface: #0c1825;
-    --accent:  #c8882a;
-    --green:   #4cd9a5;
-    --red:     #ec6a6a;
-    --text:    #eef2f7;
-    --sub:     #7892a8;
-    --line:    rgba(255,255,255,.07);
+    --bg: #0c0e10;
+    --surface: #14171b;
+    --surface-2: #1a1e23;
+    --line: rgba(255,255,255,.07);
+    --line-strong: rgba(255,255,255,.16);
+    --text: #ecf0ee;
+    --sub: #8a948e;
+    --dim: #5a635d;
+    --accent: oklch(0.85 0.18 130);
+    --accent-ink: #0a1207;
+    --red: oklch(0.7 0.22 25);
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     display: flex; align-items: center; justify-content: center;
     padding: 24px;
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+    overflow: hidden;
+  }
+  /* glow no fundo */
+  body::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in oklab, var(--accent) 25%, transparent), transparent 70%);
+    top: -200px; left: -200px;
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  body::after {
+    content: '';
+    position: absolute;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in oklab, var(--accent) 12%, transparent), transparent 70%);
+    bottom: -150px; right: -150px;
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  ::selection { background: var(--accent); color: var(--accent-ink); }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+  .brand-mark {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    display: grid; place-items: center;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: .04em;
+  }
+  .brand-name {
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.01em;
+  }
+  .brand-sub {
+    font-size: 11px;
+    color: var(--sub);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+    text-transform: lowercase;
+    letter-spacing: .06em;
   }
 
   .card {
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 44px 40px;
-    width: 100%; max-width: 380px;
-    display: flex; flex-direction: column; gap: 24px;
+    border-radius: 16px;
+    padding: 36px 32px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 30px 80px -30px rgba(0,0,0,.6);
   }
 
-  .logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 1rem; font-weight: 900;
-    letter-spacing: .3em; color: var(--accent);
+  .card-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
     text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--sub);
   }
-
   h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.6rem; font-weight: 700; line-height: 1.1;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-top: -8px;
   }
-  h1 span { color: var(--accent); font-style: italic; }
 
   .field { display: flex; flex-direction: column; gap: 7px; }
-
   label {
-    font-size: .72rem; font-weight: 600;
-    letter-spacing: .18em; text-transform: uppercase; color: var(--sub);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--sub);
   }
 
   input[type="password"] {
-    background: var(--bg); border: 1px solid var(--line); border-radius: 9px;
-    padding: 11px 14px; color: var(--text);
-    font-family: 'DM Sans', sans-serif; font-size: .95rem;
-    outline: none; width: 100%; transition: border-color .2s;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 13px 14px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    outline: none;
+    width: 100%;
+    transition: border-color .15s;
   }
   input:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--dim); }
 
   .btn {
-    padding: 12px 22px; border-radius: 9px; border: none;
-    font-family: 'DM Sans', sans-serif; font-weight: 600;
-    font-size: .88rem; letter-spacing: .06em; cursor: pointer;
-    transition: opacity .2s, transform .15s; text-transform: uppercase;
+    padding: 13px 22px;
+    border-radius: 10px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
     width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
   }
-  .btn:hover { opacity: .85; transform: translateY(-1px); }
-  .btn-accent { background: var(--accent); color: var(--bg); }
+  .btn:hover { opacity: .9; }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
 
   .msg {
-    padding: 10px 16px; border-radius: 8px; font-size: .85rem; display: none;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    display: none;
   }
-  .msg.err { background: rgba(236,106,106,.1); color: var(--red); border: 1px solid rgba(236,106,106,.2); }
+  .msg.err {
+    background: color-mix(in oklab, var(--red) 12%, transparent);
+    color: var(--red);
+    border: 1px solid color-mix(in oklab, var(--red) 30%, transparent);
+  }
+
+  .footnote {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+  }
 </style>
 </head>
 <body>
 
-<div class="card">
-  <div class="logo">FIEC</div>
-  <h1>Painel <span>Admin</span></h1>
-  <div class="field">
-    <label>Senha</label>
-    <input type="password" id="senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')entrar()">
+<div class="wrap">
+
+  <div class="brand-row">
+    <div class="brand-mark">F</div>
+    <div>
+      <div class="brand-name">FIEC</div>
+      <div class="brand-sub">painel admin</div>
+    </div>
   </div>
-  <button class="btn btn-accent" onclick="entrar()">Entrar</button>
-  <div class="msg" id="msg"></div>
+
+  <div class="card">
+    <div class="card-eyebrow">Acesso restrito</div>
+    <h1>Entrar no painel</h1>
+
+    <div class="field">
+      <label for="senha">Senha</label>
+      <input type="password" id="senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')entrar()" autocomplete="current-password" autofocus>
+    </div>
+
+    <button class="btn" onclick="entrar()" id="btnEntrar">
+      Entrar
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="footnote">v4.0 · fiec admin</div>
+
 </div>
 
 <script>
-// Se já tem senha salva, vai direto para o admin
 const senhaSalva = localStorage.getItem('fiec_admin_senha');
 if (senhaSalva) {
   window.location.href = '/admin.html';
@@ -102,9 +233,12 @@ if (senhaSalva) {
 
 async function entrar() {
   const senha = document.getElementById('senha').value;
+  const btn = document.getElementById('btnEntrar');
   if (!senha) return mostrarErro('Digite a senha');
 
-  // Verifica a senha antes de redirecionar
+  btn.disabled = true;
+  btn.textContent = 'Verificando…';
+
   try {
     const r = await fetch('/api/switch', {
       method: 'POST',
@@ -114,13 +248,16 @@ async function entrar() {
     const d = await r.json();
 
     if (d.error === 'Senha incorreta') {
+      btn.disabled = false;
+      btn.textContent = 'Entrar';
       return mostrarErro('Senha incorreta');
     }
 
-    // Senha ok — salva e redireciona
     localStorage.setItem('fiec_admin_senha', senha);
     window.location.href = '/admin.html';
   } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
     mostrarErro('Erro de conexão');
   }
 }
