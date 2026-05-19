@@ -58,6 +58,7 @@ async function carregarTudo() {
     if (configs.data24)     document.getElementById('cfgData24').value     = configs.data24;
     if (configs.data35)     document.getElementById('cfgData35').value     = configs.data35;
     if (configs.semestre)   document.getElementById('cfgSemestre').value   = configs.semestre;
+    if (configs.linkEspera) document.getElementById('cfgLinkEspera').value = configs.linkEspera;
 
     const idsPolos = Object.keys(d.polosStatus || {});
     POLOS = idsPolos.map(id => ({
@@ -509,6 +510,7 @@ async function salvarConfigs() {
     data24:     document.getElementById('cfgData24').value.trim(),
     data35:     document.getElementById('cfgData35').value.trim(),
     semestre:   document.getElementById('cfgSemestre').value.trim(),
+    linkEspera: document.getElementById('cfgLinkEspera').value.trim(),
   };
   try {
     const r = await fetch(API, {

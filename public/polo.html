@@ -1155,7 +1155,7 @@
         <p id="sidebarEndereco"></p>
       </div>
     </div>
-    <a href="LINK_LISTA_ESPERA_POLO_FIEC" class="espera-sidebar-btn" target="_blank">
+    <a href="#" class-espera="1" class="espera-sidebar-btn" target="_blank">
       <svg style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       Lista de Espera
     </a>
@@ -1164,17 +1164,17 @@
   <main>
     <!-- TÍTULO + BALÃO DE DATAS -->
     <div class="inscricoes-header">
-      <h2 class="inscricoes-title">Inscrições <span>2026</span></h2>
+      <h2 class="inscricoes-title" id="tituloInscricoes">Inscrições <span>2026</span></h2>
     </div>
 
     <div class="datas-balao">
       <div class="data-chip">
         <div class="data-chip-dot"></div>
-        Aulas de <strong>2ª e 4ª feira</strong> começam em <strong>03/08/2026</strong>
+        Aulas de <strong>2ª e 4ª feira</strong> começam em <strong id="data24">03/08/2026</strong>
       </div>
       <div class="data-chip">
         <div class="data-chip-dot"></div>
-        Aulas de <strong>3ª e 5ª feira</strong> começam em <strong>04/08/2026</strong>
+        Aulas de <strong>3ª e 5ª feira</strong> começam em <strong id="data35">04/08/2026</strong>
       </div>
     </div>
 
@@ -1185,7 +1185,7 @@
     <!-- ESPERA -->
     <div class="espera-section">
       <p>Não encontrou vaga na turma desejada? Entre na lista de espera e entraremos em contato assim que uma vaga for liberada.</p>
-      <a href="LINK_LISTA_ESPERA_POLO_FIEC" class="espera-btn" target="_blank">
+      <a href="#" class-espera="1" class="espera-btn" target="_blank">
         <svg><use href="#ico-list"/></svg> Entrar na Lista de Espera
       </a>
     </div>
@@ -1390,6 +1390,25 @@ document.addEventListener('DOMContentLoaded', () => {
       if (sideNome) sideNome.textContent = nome.replace('Polo ', '');
       if (sideEnd)  sideEnd.textContent  = endereco;
       document.title = `${nome} · FIEC Educação Digital`;
+
+      // Atualiza datas e título do Edge Config
+      const configs = data.configs || {};
+      if (configs.titulo) {
+        const el = document.getElementById('tituloInscricoes');
+        if (el) {
+          const partes = configs.titulo.split(' ');
+          const ano = partes[partes.length - 1];
+          const resto = partes.slice(0, -1).join(' ');
+          el.innerHTML = `${resto} <span>${ano}</span>`;
+        }
+      }
+      if (configs.data24) { const el = document.getElementById('data24'); if(el) el.textContent = configs.data24; }
+      if (configs.data35) { const el = document.getElementById('data35'); if(el) el.textContent = configs.data35; }
+      if (configs.linkEspera) {
+        document.querySelectorAll('[class-espera]').forEach(el => {
+          el.href = configs.linkEspera;
+        });
+      }
 
       renderTurmas(data.turmas);
       interceptarCliques();
