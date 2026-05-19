@@ -364,7 +364,7 @@
 <header class="header">
   <div class="header-inner">
     <span class="header-eyebrow">Programa de Educação Digital · 2026</span>
-    <h1>Inscrições 2026</h1>
+    <h1 id="tituloInscricoes">Inscrições 2026</h1>
     <div class="header-ornament">
       <div class="header-ornament-line"></div>
       <div class="header-ornament-dot"></div>
@@ -421,6 +421,12 @@ async function carregarPolos() {
     const polos     = d.polosStatus || {};
     const enderecos = d.enderecos   || {};
     const nomes     = d.nomes       || {};
+    const configs   = d.configs     || {};
+
+    // Atualiza datas e título do Edge Config
+    if (configs.titulo) document.getElementById('tituloInscricoes').textContent = configs.titulo;
+    if (configs.data24) document.getElementById('data24').textContent = configs.data24;
+    if (configs.data35) document.getElementById('data35').textContent = configs.data35;
 
     // Usa polosStatus como fonte de verdade — evita polos fantasma
     const ids = Object.keys(polos);
