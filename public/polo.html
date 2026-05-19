@@ -1164,7 +1164,7 @@
   <main>
     <!-- TÍTULO + BALÃO DE DATAS -->
     <div class="inscricoes-header">
-      <h2 class="inscricoes-title" id="tituloInscricoes">Inscrições <span>2026</span></h2>
+      <h2 class="inscricoes-title" id="tituloInscricoes" data-titulo="Inscrições 2026">Inscrições <span>2026</span></h2>
     </div>
 
     <div class="datas-balao">
@@ -1395,7 +1395,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const configs = data.configs || {};
       if (configs.eyebrow) { const ey = document.getElementById('eyebrowTexto'); if(ey) ey.textContent = configs.eyebrow; }
       if (configs.titulo) {
-        document.documentElement.style.setProperty('--titulo-inscricoes', `'${configs.titulo}'`);
+        el.setAttribute('data-titulo', configs.titulo);
         const el = document.getElementById('tituloInscricoes');
         if (el) {
           const partes = configs.titulo.split(' ');

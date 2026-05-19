@@ -142,7 +142,7 @@
     position: relative;
   }
   .header h1::before {
-    content: var(--titulo-inscricoes, 'Inscrições 2026');
+    content: attr(data-titulo);
     position: absolute; inset: 0;
     background: linear-gradient(110deg,
       transparent 30%, var(--accent2) 48%, #fff 50%, var(--accent2) 52%, transparent 70%);
@@ -365,7 +365,7 @@
 <header class="header">
   <div class="header-inner">
     <span class="header-eyebrow" id="eyebrowTexto">Programa de Educação Digital · 2026</span>
-    <h1 id="tituloInscricoes">Inscrições 2026</h1>
+    <h1 id="tituloInscricoes" data-titulo="Inscrições 2026">Inscrições 2026</h1>
     <div class="header-ornament">
       <div class="header-ornament-line"></div>
       <div class="header-ornament-dot"></div>
@@ -426,8 +426,9 @@ async function carregarPolos() {
 
     // Atualiza datas e título do Edge Config
     if (configs.titulo) {
-      document.getElementById('tituloInscricoes').textContent = configs.titulo;
-      document.documentElement.style.setProperty('--titulo-inscricoes', `'${configs.titulo}'`);
+      const el = document.getElementById('tituloInscricoes');
+      el.textContent = configs.titulo;
+      el.setAttribute('data-titulo', configs.titulo);
     }
     if (configs.eyebrow)  document.getElementById('eyebrowTexto').textContent     = configs.eyebrow;
     if (configs.data24) document.getElementById('data24').textContent = configs.data24;
