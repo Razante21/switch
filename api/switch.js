@@ -56,13 +56,14 @@ export default async function handler(req, res) {
   // ── GET ───────────────────────────────────────────────────
   if (req.method === 'GET') {
     try {
-      const [inscricoes, turmasTodas, polosStatus, esperaGlobal, enderecos, nomes] = await Promise.all([
+      const [inscricoes, turmasTodas, polosStatus, esperaGlobal, enderecos, nomes, configs] = await Promise.all([
         ecGet('inscricoes'),
         ecGet('turmas'),
         ecGet('polosStatus'),
         ecGet('esperaGlobal'),
         ecGet('enderecos'),
-        ecGet('nomes')
+        ecGet('nomes'),
+        ecGet('configs')
       ]);
 
       const aberto = inscricoes !== 'FECHADO';
@@ -79,6 +80,7 @@ export default async function handler(req, res) {
         esperaGlobal: esperaGlobal !== false,
         enderecos:    enderecosPolo,
         nomes:        nomesPolo,
+        configs:      configs ?? {},
         endereco:     polo ? (enderecosPolo[polo] || '') : undefined,
         poloNome:     polo ? (nomesPolo[polo]     || '') : undefined,
         ...(polo !== undefined ? { poloAberto } : {})
@@ -140,6 +142,12 @@ export default async function handler(req, res) {
       backupTurmas(turmas || {});
       backupPolos(polosStatus || {}, nomes || {}, enderecos || {});
       return res.status(200).json({ success: true });
+    }
+
+    // Salvar configurações do semestre
+    if (body.configs !== undefined) {
+      const ok = await ecSet([{ operation: 'upsert', key: 'configs', value: body.configs }]);
+      return res.status(ok ? 200 : 500).json({ success: ok });
     }
 
     // Toggle lista de espera global
